@@ -606,39 +606,6 @@
       }
     }
 
-
-
-    .update-popup {
-      position: fixed;
-      left: 14px;
-      right: 14px;
-      bottom: calc(14px + env(safe-area-inset-bottom));
-      z-index: 2000;
-      background: rgba(15, 63, 115, 0.97);
-      color: #fff;
-      border-radius: 18px;
-      box-shadow: 0 18px 44px rgba(15, 35, 55, 0.28);
-      padding: 14px;
-      display: none;
-    }
-    .update-popup.show { display: block; }
-    .update-popup-title { font-size: 1rem; font-weight: 800; margin-bottom: 6px; }
-    .update-popup-text { font-size: 0.88rem; line-height: 1.6; color: rgba(255,255,255,0.92); }
-    .update-popup-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-    .update-popup .update-btn-primary {
-      background: #fff;
-      color: #0f3f73;
-      box-shadow: none;
-      flex: 1 1 140px;
-    }
-    .update-popup .update-btn-secondary {
-      background: transparent;
-      color: #fff;
-      border: 1px solid rgba(255,255,255,0.32);
-      box-shadow: none;
-      flex: 1 1 110px;
-    }
-
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
@@ -915,17 +882,6 @@
     </div>
   </div>
 
-
-  <div id="updatePopup" class="update-popup" role="dialog" aria-live="polite" aria-label="更新通知">
-    <div class="update-popup-title">新しいバージョンがあります</div>
-    <div class="update-popup-text" id="updatePopupText">最新版へ更新できます。</div>
-    <div class="update-popup-actions">
-      <button id="updateNowBtn" type="button" class="update-btn-primary">更新する</button>
-      <button id="updateLaterBtn" type="button" class="update-btn-secondary">あとで</button>
-    </div>
-  </div>
-
-
   <script>
     const els = {
       modeSellBtn: document.getElementById('modeSellBtn'),
@@ -999,11 +955,7 @@
       resultArea: document.getElementById('resultArea'),
       resultMain: document.getElementById('resultMain'),
       resultSub: document.getElementById('resultSub'),
-      stepsArea: document.getElementById('stepsArea'),
-      updatePopup: document.getElementById('updatePopup'),
-      updatePopupText: document.getElementById('updatePopupText'),
-      updateNowBtn: document.getElementById('updateNowBtn'),
-      updateLaterBtn: document.getElementById('updateLaterBtn')
+      stepsArea: document.getElementById('stepsArea')
     };
 
 
