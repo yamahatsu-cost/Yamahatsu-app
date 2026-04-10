@@ -31,7 +31,29 @@
 
       window.__APP_VERSION__ = 'single-file';
     })();
-  </script>
+  
+// 販売単価プレースホルダー制御
+function updateSalePricePlaceholder() {
+  const c = els.currencyType.value;
+  const u = els.unitType.value;
+  if (c === 'JPY' && u === 'kg') {
+    els.salePrice.placeholder = '例）19.5';
+  } else if (c === 'USD' && u === 'ton') {
+    els.salePrice.placeholder = '例）160';
+  } else if (c === 'JPY' && u === 'ton') {
+    els.salePrice.placeholder = '例）25000';
+  } else if (c === 'USD' && u === 'kg') {
+    els.salePrice.placeholder = '例）0.16';
+  } else {
+    els.salePrice.placeholder = '例）160';
+  }
+}
+
+els.currencyType.addEventListener('change', updateSalePricePlaceholder);
+els.unitType.addEventListener('change', updateSalePricePlaceholder);
+updateSalePricePlaceholder();
+
+</script>
 
   <style>
     :root {
@@ -684,7 +706,29 @@
     }
 
 </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js">
+// 販売単価プレースホルダー制御
+function updateSalePricePlaceholder() {
+  const c = els.currencyType.value;
+  const u = els.unitType.value;
+  if (c === 'JPY' && u === 'kg') {
+    els.salePrice.placeholder = '例）19.5';
+  } else if (c === 'USD' && u === 'ton') {
+    els.salePrice.placeholder = '例）160';
+  } else if (c === 'JPY' && u === 'ton') {
+    els.salePrice.placeholder = '例）25000';
+  } else if (c === 'USD' && u === 'kg') {
+    els.salePrice.placeholder = '例）0.16';
+  } else {
+    els.salePrice.placeholder = '例）160';
+  }
+}
+
+els.currencyType.addEventListener('change', updateSalePricePlaceholder);
+els.unitType.addEventListener('change', updateSalePricePlaceholder);
+updateSalePricePlaceholder();
+
+</script>
 </head>
 <body>
   <div class="app">
@@ -726,7 +770,7 @@
       <div class="row three" id="basicTopRow">
         <div class="field" id="salePriceField">
           <label for="salePrice" id="salePriceLabel">販売単価</label>
-          <input id="salePrice" type="number" step="1" placeholder="例: 160" />
+          <input id="salePrice" type="number" step="1" placeholder="例）160" />
         </div>
         <div class="field hidden" id="buyPriceField">
           <label for="buyPrice" id="buyPriceLabel">仕入単価</label>
@@ -1207,6 +1251,9 @@
       } else if (item === '古着') {
         els.lotQty.value = '22';
         if (!keepContainerLoad) els.containerLoad.value = '22';
+        els.currencyType.value = 'JPY';
+        els.unitType.value = 'kg';
+        updateSalePricePlaceholder();
         els.ourMargin.value = '2';
         els.lcFee.value = '0';
         els.overseasCom.value = '0';
@@ -1722,6 +1769,7 @@ els.fxRate.value = '';
     }
 
 function refreshUI() {
+      updateSalePricePlaceholder();
       setActive(els.modeSellBtn, state.calcMode === 'SELL_TO_BUY');
       setActive(els.modeBuyBtn, state.calcMode === 'BUY_TO_SELL');
 
@@ -2751,6 +2799,11 @@ function refreshUI() {
     });
     els.unitType.addEventListener('change', refreshUI);
     els.itemCategory.addEventListener('change', () => {
+
+      // 単価リセット（確実に最初に実行）
+      els.salePrice.value = '';
+      els.buyPrice.value = '';
+
       state.transportTouched = false;
       els.purchaseTerm.value = 'YARD';
       applyItemPreset();
@@ -2896,7 +2949,29 @@ els.fxRate.addEventListener('blur', () => {
 
     loadSupplierMaster();
     loadData();
-  </script>
+  
+// 販売単価プレースホルダー制御
+function updateSalePricePlaceholder() {
+  const c = els.currencyType.value;
+  const u = els.unitType.value;
+  if (c === 'JPY' && u === 'kg') {
+    els.salePrice.placeholder = '例）19.5';
+  } else if (c === 'USD' && u === 'ton') {
+    els.salePrice.placeholder = '例）160';
+  } else if (c === 'JPY' && u === 'ton') {
+    els.salePrice.placeholder = '例）25000';
+  } else if (c === 'USD' && u === 'kg') {
+    els.salePrice.placeholder = '例）0.16';
+  } else {
+    els.salePrice.placeholder = '例）160';
+  }
+}
+
+els.currencyType.addEventListener('change', updateSalePricePlaceholder);
+els.unitType.addEventListener('change', updateSalePricePlaceholder);
+updateSalePricePlaceholder();
+
+</script>
 
   <div id="updatePopup" class="update-popup hidden" role="dialog" aria-live="polite" aria-label="更新通知">
     <div class="update-popup-title">新しいバージョンがあります</div>
@@ -2985,7 +3060,29 @@ els.fxRate.addEventListener('blur', () => {
         setInterval(checkForUpdate, 60000);
       });
     })();
-  </script>
+  
+// 販売単価プレースホルダー制御
+function updateSalePricePlaceholder() {
+  const c = els.currencyType.value;
+  const u = els.unitType.value;
+  if (c === 'JPY' && u === 'kg') {
+    els.salePrice.placeholder = '例）19.5';
+  } else if (c === 'USD' && u === 'ton') {
+    els.salePrice.placeholder = '例）160';
+  } else if (c === 'JPY' && u === 'ton') {
+    els.salePrice.placeholder = '例）25000';
+  } else if (c === 'USD' && u === 'kg') {
+    els.salePrice.placeholder = '例）0.16';
+  } else {
+    els.salePrice.placeholder = '例）160';
+  }
+}
+
+els.currencyType.addEventListener('change', updateSalePricePlaceholder);
+els.unitType.addEventListener('change', updateSalePricePlaceholder);
+updateSalePricePlaceholder();
+
+</script>
 
 </body>
 </html>
