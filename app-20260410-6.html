@@ -197,7 +197,7 @@
       background: #f9fcff;
     }
     .modal-footer {
-      position: sticky;F
+      position: sticky;
       bottom: 0;
       z-index: 5;
       display: flex;
@@ -619,6 +619,57 @@
         transform: translateY(0);
         box-shadow: 0 0 0 0 rgba(47,125,209,0.00);
       }
+    }
+
+
+    /* update popup */
+    .update-popup {
+      position: fixed;
+      left: 14px;
+      right: 14px;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      z-index: 99999;
+      background: rgba(23, 50, 77, 0.96);
+      color: #fff;
+      border-radius: 16px;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.22);
+      padding: 14px;
+      backdrop-filter: blur(8px);
+    }
+    .update-popup.hidden { display: none !important; }
+    .update-popup-title {
+      font-size: 0.98rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .update-popup-text {
+      font-size: 0.84rem;
+      line-height: 1.45;
+      opacity: 0.95;
+      margin-bottom: 10px;
+    }
+    .update-popup-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+    .update-popup-actions button {
+      min-height: 40px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-weight: 800;
+      box-shadow: none;
+    }
+    .update-popup-actions .later-btn {
+      background: rgba(255,255,255,0.14);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.24);
+    }
+    .update-popup-actions .update-btn {
+      background: #fff;
+      color: #17324d;
+      border: 1px solid rgba(255,255,255,0.5);
     }
 
 </style>
@@ -1930,7 +1981,58 @@
     tr.strong td { font-weight: 700; font-size: 16px; border-bottom: 2px solid #888; }
     .result { margin-top: 12px; font-size: 18px; font-weight: 700; text-align: right; }
     .small { font-size: 14px; }
-  </style>
+  
+    /* update popup */
+    .update-popup {
+      position: fixed;
+      left: 14px;
+      right: 14px;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      z-index: 99999;
+      background: rgba(23, 50, 77, 0.96);
+      color: #fff;
+      border-radius: 16px;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.22);
+      padding: 14px;
+      backdrop-filter: blur(8px);
+    }
+    .update-popup.hidden { display: none !important; }
+    .update-popup-title {
+      font-size: 0.98rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .update-popup-text {
+      font-size: 0.84rem;
+      line-height: 1.45;
+      opacity: 0.95;
+      margin-bottom: 10px;
+    }
+    .update-popup-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+    .update-popup-actions button {
+      min-height: 40px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-weight: 800;
+      box-shadow: none;
+    }
+    .update-popup-actions .later-btn {
+      background: rgba(255,255,255,0.14);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.24);
+    }
+    .update-popup-actions .update-btn {
+      background: #fff;
+      color: #17324d;
+      border: 1px solid rgba(255,255,255,0.5);
+    }
+
+</style>
 </head>
 <body>
   <div class="sheet">
@@ -1949,6 +2051,94 @@
     </table>
     <div class="result">${escapeHtml(report.resultMain)}</div>
   </div>
+
+  <div id="updatePopup" class="update-popup hidden" role="dialog" aria-live="polite" aria-label="更新通知">
+    <div class="update-popup-title">新しいバージョンがあります</div>
+    <div class="update-popup-text" id="updatePopupText">最新版を確認しています…</div>
+    <div class="update-popup-actions">
+      <button type="button" class="later-btn" id="updateLaterBtn">あとで</button>
+      <button type="button" class="update-btn" id="updateNowBtn">更新する</button>
+    </div>
+  </div>
+
+
+
+  <script>
+    (function () {
+      const CURRENT_VERSION = String(window.__APP_VERSION__ || '20260410-6');
+      const POPUP_HIDE_KEY = 'koshi-export-update-popup-hide-for-' + CURRENT_VERSION;
+      const VERSION_URL = './version.json?t=' + Date.now();
+
+      function getUpdateEls() {
+        return {
+          popup: document.getElementById('updatePopup'),
+          text: document.getElementById('updatePopupText'),
+          later: document.getElementById('updateLaterBtn'),
+          now: document.getElementById('updateNowBtn')
+        };
+      }
+
+      function normalizeFileName(path) {
+        return String(path || '').replace(/^.\//, '').split('?')[0].trim();
+      }
+
+      function showPopup(version, appFile) {
+        const ui = getUpdateEls();
+        if (!ui.popup || !ui.text || !ui.now || !ui.later) return;
+
+        const target = String(appFile || '').trim();
+        if (!target) return;
+
+        ui.text.textContent = '現在の版: ' + CURRENT_VERSION + ' / 最新版: ' + version;
+        ui.popup.classList.remove('hidden');
+
+        ui.later.onclick = function () {
+          try { sessionStorage.setItem(POPUP_HIDE_KEY, '1'); } catch (e) {}
+          ui.popup.classList.add('hidden');
+        };
+
+        ui.now.onclick = function () {
+          const separator = target.includes('?') ? '&' : '?';
+          location.href = target + separator + 'updated=' + Date.now();
+        };
+      }
+
+      async function checkForUpdate() {
+        const ui = getUpdateEls();
+        if (!ui.popup) return;
+
+        try {
+          const hidden = sessionStorage.getItem(POPUP_HIDE_KEY) === '1';
+          const res = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
+          if (!res.ok) return;
+          const data = await res.json();
+
+          const latestVersion = String(data.version || '').trim();
+          const latestFile = normalizeFileName(data.appFile || '');
+          const currentFile = normalizeFileName(location.pathname.split('/').pop() || '');
+
+          const hasUpdate = !!latestVersion && (
+            latestVersion !== CURRENT_VERSION ||
+            (latestFile && currentFile && latestFile !== currentFile)
+          );
+
+          if (hasUpdate && !hidden) {
+            showPopup(latestVersion, data.appFile);
+          } else if (ui.popup) {
+            ui.popup.classList.add('hidden');
+          }
+        } catch (e) {
+          // silent
+        }
+      }
+
+      window.addEventListener('load', function () {
+        setTimeout(checkForUpdate, 1200);
+        setInterval(checkForUpdate, 60000);
+      });
+    })();
+  </script>
+
 </body>
 </html>`;
     }
@@ -2313,5 +2503,93 @@ els.fxRate.addEventListener('blur', () => {
     loadSupplierMaster();
     loadData();
   </script>
+
+  <div id="updatePopup" class="update-popup hidden" role="dialog" aria-live="polite" aria-label="更新通知">
+    <div class="update-popup-title">新しいバージョンがあります</div>
+    <div class="update-popup-text" id="updatePopupText">最新版を確認しています…</div>
+    <div class="update-popup-actions">
+      <button type="button" class="later-btn" id="updateLaterBtn">あとで</button>
+      <button type="button" class="update-btn" id="updateNowBtn">更新する</button>
+    </div>
+  </div>
+
+
+
+  <script>
+    (function () {
+      const CURRENT_VERSION = String(window.__APP_VERSION__ || '20260410-6');
+      const POPUP_HIDE_KEY = 'koshi-export-update-popup-hide-for-' + CURRENT_VERSION;
+      const VERSION_URL = './version.json?t=' + Date.now();
+
+      function getUpdateEls() {
+        return {
+          popup: document.getElementById('updatePopup'),
+          text: document.getElementById('updatePopupText'),
+          later: document.getElementById('updateLaterBtn'),
+          now: document.getElementById('updateNowBtn')
+        };
+      }
+
+      function normalizeFileName(path) {
+        return String(path || '').replace(/^.\//, '').split('?')[0].trim();
+      }
+
+      function showPopup(version, appFile) {
+        const ui = getUpdateEls();
+        if (!ui.popup || !ui.text || !ui.now || !ui.later) return;
+
+        const target = String(appFile || '').trim();
+        if (!target) return;
+
+        ui.text.textContent = '現在の版: ' + CURRENT_VERSION + ' / 最新版: ' + version;
+        ui.popup.classList.remove('hidden');
+
+        ui.later.onclick = function () {
+          try { sessionStorage.setItem(POPUP_HIDE_KEY, '1'); } catch (e) {}
+          ui.popup.classList.add('hidden');
+        };
+
+        ui.now.onclick = function () {
+          const separator = target.includes('?') ? '&' : '?';
+          location.href = target + separator + 'updated=' + Date.now();
+        };
+      }
+
+      async function checkForUpdate() {
+        const ui = getUpdateEls();
+        if (!ui.popup) return;
+
+        try {
+          const hidden = sessionStorage.getItem(POPUP_HIDE_KEY) === '1';
+          const res = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
+          if (!res.ok) return;
+          const data = await res.json();
+
+          const latestVersion = String(data.version || '').trim();
+          const latestFile = normalizeFileName(data.appFile || '');
+          const currentFile = normalizeFileName(location.pathname.split('/').pop() || '');
+
+          const hasUpdate = !!latestVersion && (
+            latestVersion !== CURRENT_VERSION ||
+            (latestFile && currentFile && latestFile !== currentFile)
+          );
+
+          if (hasUpdate && !hidden) {
+            showPopup(latestVersion, data.appFile);
+          } else if (ui.popup) {
+            ui.popup.classList.add('hidden');
+          }
+        } catch (e) {
+          // silent
+        }
+      }
+
+      window.addEventListener('load', function () {
+        setTimeout(checkForUpdate, 1200);
+        setInterval(checkForUpdate, 60000);
+      });
+    })();
+  </script>
+
 </body>
 </html>
