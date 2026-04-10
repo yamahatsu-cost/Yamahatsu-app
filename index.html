@@ -327,7 +327,7 @@
     }
     .app-header h1 {
       margin: 0;
-      font-size: 1.22rem;
+      font-size: 1.4rem;
       font-weight: 800;
       letter-spacing: 0.02em;
     }
@@ -672,6 +672,17 @@
       border: 1px solid rgba(255,255,255,0.5);
     }
 
+    #exportCostCard label {
+      font-size: 0.97rem;
+    }
+    #exportCostCard input,
+    #exportCostCard select {
+      font-size: 1.06rem;
+    }
+    #exportCostCard .section-title {
+      font-size: 1.12rem;
+    }
+
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
@@ -701,6 +712,17 @@
 
     <div class="card">
       <div class="section-title">2. 基本条件</div>
+      <div class="row" style="margin-top:0; margin-bottom:12px;">
+        <div class="field" style="max-width:260px;">
+          <label for="itemCategory">品目</label>
+          <select id="itemCategory">
+            <option value="古紙" selected>古紙</option>
+            <option value="B級品">B級品</option>
+            <option value="古着">古着</option>
+          </select>
+        </div>
+      </div>
+
       <div class="row three" id="basicTopRow">
         <div class="field" id="salePriceField">
           <label for="salePrice" id="salePriceLabel">販売単価</label>
@@ -775,7 +797,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="exportCostCard">
       <div class="section-title">3. 輸出コスト入力</div>
       <div class="row three">
         <div class="field" id="overseasComField">
@@ -809,7 +831,7 @@
         </div>
         <div class="field" id="seaFreightField">
           <label for="seaFreight">海上運賃（40F＊EBS等込み)</label>
-          <input id="seaFreight" type="number" step="10" value="" />
+          <input id="seaFreight" type="number" step="10" value="" placeholder="例）400" />
           
         </div>
         <div class="field" id="doFeeField">
@@ -974,6 +996,7 @@
       buyPriceLabel: document.getElementById('buyPriceLabel'),
       salePrice: document.getElementById('salePrice'),
       buyPrice: document.getElementById('buyPrice'),
+      itemCategory: document.getElementById('itemCategory'),
       currencyTypeLabel: document.getElementById('currencyTypeLabel'),
       currencyType: document.getElementById('currencyType'),
       unitTypeLabel: document.getElementById('unitTypeLabel'),
@@ -1150,6 +1173,54 @@
       state.marginMode = newMode;
     }
 
+    function shouldUseJpyMargin() {
+      return els.salesTerm.value === 'CY' || els.salesTerm.value === 'WH' || els.itemCategory.value === '古着';
+    }
+
+    function syncTransportLoadWithContainer() {
+      if (els.domesticTransportType.value === 'DRAY' || els.domesticTransportType.value === 'SHORT') {
+        els.transportLoad.value = els.containerLoad.value;
+      }
+    }
+
+    function applyItemPreset(options = {}) {
+      const item = els.itemCategory.value || '古紙';
+      const keepSalesTerm = !!options.keepSalesTerm;
+      const keepContainerLoad = !!options.keepContainerLoad;
+
+      if (item === '古紙') {
+        els.lotQty.value = '200';
+        if (!keepContainerLoad) els.containerLoad.value = '22';
+        els.ourMargin.value = '3';
+        els.freightCurrency.value = 'USD';
+        els.lcFee.value = '1.0';
+        els.overseasCom.value = '0.5';
+        if (!keepSalesTerm) els.salesTerm.value = 'CFR';
+      } else if (item === 'B級品') {
+        els.lotQty.value = '24';
+        if (!keepContainerLoad) els.containerLoad.value = '24';
+        els.ourMargin.value = '30';
+        els.freightCurrency.value = 'JPY';
+        els.lcFee.value = '0.5';
+        els.overseasCom.value = '0';
+        if (!keepSalesTerm) els.salesTerm.value = 'CIF';
+      } else if (item === '古着') {
+        els.lotQty.value = '22';
+        if (!keepContainerLoad) els.containerLoad.value = '22';
+        els.ourMargin.value = '2';
+        els.lcFee.value = '0';
+        els.overseasCom.value = '0';
+        if (!keepSalesTerm) els.salesTerm.value = 'FOB';
+      }
+
+      els.seaFreight.value = '';
+
+      syncTransportLoadWithContainer();
+      refreshUI();
+      updateCalcButtonState();
+      saveData(false);
+    }
+
 
     function uid() {
       return 's' + Math.random().toString(36).slice(2, 10);
@@ -1184,7 +1255,7 @@
       renderSupplierSelect();
       renderSupplierMasterEditor();
       if (state.selectedSupplierId) {
-        const exists = state.supplierMaster.some(x => x.id === state.selectedSupplierId);
+        const exists = state.supplierMaster.some(x => String(x.name || '').trim() === state.selectedSupplierId);
         if (!exists) {
           state.selectedSupplierId = '';
           els.supplierSelect.value = '';
@@ -1197,12 +1268,26 @@
       }
     }
 
+    function getSupplierMasterByNameAndType(name, transportType) {
+      const targetName = String(name || '').trim();
+      const targetType = String(transportType || '').trim();
+      if (!targetName || !targetType) return null;
+      return state.supplierMaster.find(s => String(s.name || '').trim() === targetName && String(s.transportType || '').trim() === targetType) || null;
+    }
+
+    function getSupplierMasterRowsByName(name) {
+      const targetName = String(name || '').trim();
+      if (!targetName) return [];
+      return state.supplierMaster.filter(s => String(s.name || '').trim() === targetName);
+    }
+
     function renderSupplierSelect() {
       const current = state.selectedSupplierId || els.supplierSelect.value || '';
+      const uniqueNames = [...new Set(state.supplierMaster.map(s => String(s.name || '').trim()).filter(Boolean))];
       const options = ['<option value="">選択してください</option>']
-        .concat(state.supplierMaster.map(s => `<option value="${s.id}">${escapeHtml(s.name || '（名称未入力）')}</option>`));
+        .concat(uniqueNames.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`));
       els.supplierSelect.innerHTML = options.join('');
-      els.supplierSelect.value = state.supplierMaster.some(s => s.id === current) ? current : '';
+      els.supplierSelect.value = uniqueNames.includes(current) ? current : '';
       state.selectedSupplierId = els.supplierSelect.value;
     }
 
@@ -1276,21 +1361,32 @@
     }
 
     function applySelectedSupplier(autoOnly = false) {
-      const supplierId = els.supplierSelect.value;
-      state.selectedSupplierId = supplierId;
-      const supplier = state.supplierMaster.find(s => s.id === supplierId);
-      if (!supplier) return;
-      els.domesticTransportType.value = supplier.transportType || 'DRAY';
+      const supplierName = String(els.supplierSelect.value || '').trim();
+      state.selectedSupplierId = supplierName;
+      if (!supplierName) return;
+
+      const currentType = els.domesticTransportType.value;
+      const matched = getSupplierMasterByNameAndType(supplierName, currentType);
+      const hasAnySupplierRows = getSupplierMasterRowsByName(supplierName).length > 0;
+
       refreshTransportDefaults(false);
-      if (!autoOnly || String(els.domesticTransportCost.value).trim() === '') {
-        els.domesticTransportCost.value = supplier.transportCost || '';
+
+      if (matched) {
+        if (currentType !== 'SHORT' && (!autoOnly || String(els.domesticTransportCost.value).trim() === '')) {
+          els.domesticTransportCost.value = matched.transportCost || '';
+        }
+        if (!autoOnly || String(els.transportLoad.value).trim() === '') {
+          els.transportLoad.value = matched.transportLoad || ((currentType === 'TRUCK') ? '12' : ((currentType === '4T') ? '4' : (String(els.containerLoad.value).trim() || '22')));
+        }
+        state.transportTouched = false;
+        refreshUI();
+        flashSupplierAutoFilledFields();
+      } else {
+        if (hasAnySupplierRows) {
+          els.domesticTransportCost.value = '';
+        }
+        refreshUI();
       }
-      if (!autoOnly || String(els.transportLoad.value).trim() === '') {
-        els.transportLoad.value = supplier.transportLoad || ((supplier.transportType === 'TRUCK') ? '12' : ((supplier.transportType === '4T') ? '4' : '22'));
-      }
-      state.transportTouched = false;
-      refreshUI();
-      flashSupplierAutoFilledFields();
       saveData(false);
     }
 
@@ -1308,30 +1404,39 @@
     }
 
     function saveCurrentTransportToSupplier() {
-      const supplierId = els.supplierSelect.value;
-      if (!supplierId) {
+      const supplierName = String(els.supplierSelect.value || '').trim();
+      if (!supplierName) {
         showWarning('先に仕入先を選択してください。');
         return;
       }
 
-      const supplierName = els.supplierSelect.options[els.supplierSelect.selectedIndex]?.text || '選択中の仕入先';
-      const ok = window.confirm(`「${supplierName}」の国内輸送条件を現在の内容で上書きします。よろしいですか？`);
+      const transportType = els.domesticTransportType.value;
+      const transportLabel = els.domesticTransportType.options[els.domesticTransportType.selectedIndex]?.text || transportType;
+      const ok = window.confirm(`「${supplierName}」の「${transportLabel}」条件を現在の内容で保存します。よろしいですか？`);
       if (!ok) return;
 
       state.supplierMaster = collectSupplierMasterFromEditor();
-      const idx = state.supplierMaster.findIndex(s => s.id === supplierId);
-      if (idx < 0) {
-        showWarning('選択した仕入先が見つかりません。');
-        return;
+      const idx = state.supplierMaster.findIndex(s => String(s.name || '').trim() === supplierName && String(s.transportType || '').trim() === transportType);
+
+      const rowData = normalizeSupplierRow({
+        id: idx >= 0 ? state.supplierMaster[idx].id : uid(),
+        name: supplierName,
+        transportType: transportType,
+        transportCost: String(els.domesticTransportCost.value || ''),
+        transportLoad: String(els.transportLoad.value || '')
+      });
+
+      if (idx >= 0) {
+        state.supplierMaster[idx] = rowData;
+      } else {
+        state.supplierMaster.push(rowData);
       }
-      state.supplierMaster[idx].transportType = els.domesticTransportType.value;
-      state.supplierMaster[idx].transportCost = String(els.domesticTransportCost.value || '');
-      state.supplierMaster[idx].transportLoad = String(els.transportLoad.value || '');
+
       localStorage.setItem(SUPPLIER_MASTER_KEY, JSON.stringify(state.supplierMaster));
       renderSupplierSelect();
       renderSupplierMasterEditor();
-      els.supplierSelect.value = supplierId;
-      state.selectedSupplierId = supplierId;
+      els.supplierSelect.value = supplierName;
+      state.selectedSupplierId = supplierName;
       flashSupplierAutoFilledFields();
       showWarning('現在の国内輸送条件を選択中の仕入先へ保存しました。', true);
       setTimeout(() => hideWarning(), 1800);
@@ -1342,6 +1447,7 @@
         calcMode: state.calcMode,
         salePrice: els.salePrice.value,
         buyPrice: els.buyPrice.value,
+        itemCategory: els.itemCategory.value,
         currencyType: els.currencyType.value,
         unitType: els.unitType.value,
         salesTerm: els.salesTerm.value,
@@ -1372,6 +1478,7 @@
       state.calcMode = data.calcMode || 'SELL_TO_BUY';
       els.salePrice.value = data.salePrice || '';
       els.buyPrice.value = data.buyPrice || '';
+      els.itemCategory.value = data.itemCategory || '古紙';
       els.currencyType.value = data.currencyType || 'USD';
       els.unitType.value = data.unitType || 'ton';
       els.salesTerm.value = data.salesTerm || 'CIF';
@@ -1411,7 +1518,11 @@
     }
     function loadData() {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return refreshUI();
+      if (!raw) {
+        refreshUI();
+        applyItemPreset();
+        return;
+      }
       try { applyFormData(JSON.parse(raw)); if (String(els.fxRate.value).trim() !== '') formatFx(); } catch (e) { refreshUI(); }
     }
     function resetData() {
@@ -1421,15 +1532,16 @@
 
       els.salePrice.value = '';
       els.buyPrice.value = '';
+      els.itemCategory.value = '古紙';
       els.currencyType.value = 'USD';
       els.unitType.value = 'ton';
-      els.salesTerm.value = 'CIF';
+      els.salesTerm.value = 'CFR';
       els.lotQty.value = '200';
       els.purchaseTerm.value = 'YARD';
       els.fxRate.value = '';
       els.containerLoad.value = '22';
       els.overseasCom.value = '0.5';
-      els.lcFee.value = '1.5';
+      els.lcFee.value = '1.0';
       els.ourMargin.value = '3';
       els.freightCurrency.value = 'USD';
       els.seaFreight.value = '';
@@ -1459,16 +1571,26 @@
 
     function refreshTransportDefaults(changedByUser = false) {
       const transportType = els.domesticTransportType.value;
+      const containerLoadValue = String(els.containerLoad.value).trim();
 
       els.transportLoad.readOnly = true;
       els.transportUnitPreview.value = '円/車';
+
+      if (transportType === 'SHORT') {
+        els.domesticTransportCostLabel.textContent = 'ドレー単価';
+        els.domesticTransportCost.placeholder = '例）25000';
+        els.domesticTransportCost.value = '';
+      } else {
+        els.domesticTransportCostLabel.textContent = '国内輸送費（車単価）';
+        els.domesticTransportCost.placeholder = '例）35000';
+      }
 
       if (transportType === 'TRUCK') {
         els.transportLoad.value = '12';
       } else if (transportType === '4T') {
         els.transportLoad.value = '4';
       } else {
-        els.transportLoad.value = '22';
+        els.transportLoad.value = containerLoadValue || '22';
       }
     }
 
@@ -1587,7 +1709,17 @@
       els.calcBtn.style.cursor = els.calcBtn.disabled ? 'not-allowed' : 'pointer';
     }
 
-    function refreshUI() {
+    
+    function updateSeaFreightInputState(clearValue = false) {
+      if (clearValue) els.seaFreight.value = '';
+      if (els.freightCurrency.value === 'USD') {
+        els.seaFreight.placeholder = '例）400';
+      } else {
+        els.seaFreight.placeholder = '例）25000';
+      }
+    }
+
+function refreshUI() {
       setActive(els.modeSellBtn, state.calcMode === 'SELL_TO_BUY');
       setActive(els.modeBuyBtn, state.calcMode === 'BUY_TO_SELL');
 
@@ -1615,9 +1747,10 @@
       els.overseasComField.classList.toggle('hidden', !showOverseas);
       els.lcFeeField.classList.toggle('hidden', !showOverseas);
       els.ourMarginField.classList.remove('hidden');
-      syncMarginMode(isCY || isWH);
+      syncMarginMode(shouldUseJpyMargin());
       els.freightCurrencyField.classList.toggle('hidden', !(isCIF || isCFR));
       els.seaFreightField.classList.toggle('hidden', !(isCIF || isCFR));
+      updateSeaFreightInputState(false);
       els.doFeeField.classList.toggle('hidden', !(isCIF || isCFR || isFOB));
       els.insuranceField.classList.toggle('hidden', !isCIF);
       els.customsFeeField.classList.toggle('hidden', isCY || isWH);
@@ -1853,7 +1986,7 @@
       const storageFee = n(els.storageFee.value);
       const shortDrayCost = n(els.shortDrayCost.value);
       const domesticPerTon = load > 0 ? (transportCost / load) : 0;
-      const shortDrayPerTon = shortDrayCost > 0 ? (shortDrayCost / 22) : 0;
+      const shortDrayPerTon = shortDrayCost > 0 ? (shortDrayCost / (n(els.containerLoad.value) || 22)) : 0;
       const showStorage = !els.storageFeeField.classList.contains('hidden') && String(els.storageFee.value).trim() !== '';
       const showShortDray = !els.shortDrayCostField.classList.contains('hidden') && String(els.shortDrayCost.value).trim() !== '';
       return {
@@ -1879,7 +2012,7 @@
         lines.push(`入出庫・保管 = ${fmt0(b.storageFee)} 円/ton`);
       }
       if (b.showShortDray) {
-        lines.push(`ショートドレー = ${fmt0(b.shortDrayCost)} ÷ 22 = ${fmt(b.shortDrayPerTon, 2)} 円/ton`);
+        lines.push(`ショートドレー = ${fmt0(b.shortDrayCost)} ÷ ${fmt(n(els.containerLoad.value) || 22, 2)} = ${fmt(b.shortDrayPerTon, 2)} 円/ton`);
       }
       return lines;
     }
@@ -1894,7 +2027,7 @@
         rows.push({ label: '入出庫・保管', value: `${fmt0(b.storageFee)} 円/ton` });
       }
       if (b.showShortDray) {
-        rows.push({ label: 'ショートドレー', value: `${fmt0(b.shortDrayCost)} ÷ 22 = ${fmt(b.shortDrayPerTon, 2)} 円/ton` });
+        rows.push({ label: 'ショートドレー', value: `${fmt0(b.shortDrayCost)} ÷ ${fmt(n(els.containerLoad.value) || 22, 2)} = ${fmt(b.shortDrayPerTon, 2)} 円/ton` });
       }
       return rows;
     }
@@ -1905,9 +2038,7 @@
 
 
     function getSelectedSupplierName() {
-      const supplierId = els.supplierSelect.value;
-      const supplier = state.supplierMaster.find(s => s.id === supplierId);
-      return supplier?.name || '未選択';
+      return String(els.supplierSelect.value || '').trim() || '未選択';
     }
 
     function getTodayJa() {
@@ -1945,6 +2076,7 @@
       const salePriceDisplay = els.currencyType.value === 'USD'
         ? `${getSalesConditionLabel()} ${fmt(salePriceTon, 2)} USD/ton`
         : `${getSalesConditionLabel()} ${fmt(salePriceTon / 1000, 2)} 円/kg`;
+      const itemCategory = els.itemCategory.value || '古紙';
 
       if (state.calcMode === 'SELL_TO_BUY') {
         let saleUsdTon = els.currencyType.value === 'USD' ? salePriceTon : (fxRate > 0 ? salePriceTon / fxRate : 0);
@@ -1958,7 +2090,7 @@
           rows.push({ label: 'LC 手数料', value: `${fmt(n(els.lcFee.value), 2)} USD/ton` });
           netUsdTon -= n(els.lcFee.value);
         }
-        if (costs.includeMargin && term !== 'CY' && term !== 'WH') {
+        if (costs.includeMargin && !shouldUseJpyMargin()) {
           rows.push({ label: '当社口銭', value: `${fmt(n(els.ourMargin.value), 2)} USD/ton` });
           netUsdTon -= n(els.ourMargin.value);
         }
@@ -1973,7 +2105,7 @@
         let baseJpyTon = floor0(netUsdTon * fxRate);
         rows.push({ label: '円換算', value: `${fmt(netUsdTon, 2)} × ${fmt(fxRate, 2)} = ${fmt0(baseJpyTon)} 円/ton` });
 
-        if (costs.includeMargin && (term === 'CY' || term === 'WH')) {
+        if (costs.includeMargin && shouldUseJpyMargin()) {
           const marginJpyTon = n(els.ourMargin.value) * 1000;
           rows.push({ label: '当社口銭', value: `${fmt(n(els.ourMargin.value), 2)} 円/kg = ${fmt(marginJpyTon, 2)} 円/ton` });
           baseJpyTon -= marginJpyTon;
@@ -2012,6 +2144,7 @@
           title: '見 積 計 算 書',
           calcDate: getTodayJa(),
           supplierName: getSelectedSupplierName(),
+          itemCategory,
           purchaseCondition: getPurchaseConditionLabel(resultJpyKg),
           cyBasePrice: getCyBasePriceLabel(baseJpyTon),
           salePriceDisplay,
@@ -2066,7 +2199,7 @@
       if (term === 'CIF' || term === 'CFR') {
         let neededUsdTon = fxRate > 0 ? neededJpyTon / fxRate : 0;
         rows.push({ label: 'ドル換算前', value: `${fmt(neededJpyTon, 2)} ÷ ${fmt(fxRate, 2)} = ${fmt(neededUsdTon, 2)} USD/ton` });
-        if (costs.includeMargin && term !== 'CY' && term !== 'WH') {
+        if (costs.includeMargin && !shouldUseJpyMargin()) {
           rows.push({ label: '当社口銭', value: `${fmt(n(els.ourMargin.value), 2)} USD/ton` });
           neededUsdTon += n(els.ourMargin.value);
         }
@@ -2088,7 +2221,7 @@
         resultMain = `${fmt(resultUsdTon, 2)} USD/ton`;
       } else {
         if (costs.includeMargin) {
-          if (term === 'CY' || term === 'WH') {
+          if (shouldUseJpyMargin()) {
             const marginJpyTon = n(els.ourMargin.value) * 1000;
             rows.push({ label: '当社口銭', value: `${fmt(n(els.ourMargin.value), 2)} 円/kg = ${fmt(marginJpyTon, 2)} 円/ton` });
             neededJpyTon += marginJpyTon;
@@ -2112,6 +2245,7 @@
         title: '見 積 計 算 書',
         calcDate: getTodayJa(),
         supplierName: getSelectedSupplierName(),
+        itemCategory,
         purchaseCondition,
         cyBasePrice,
         salePriceDisplay: `販売条件：${getSalesConditionLabel()} 逆算`,
@@ -2203,6 +2337,17 @@
       border: 1px solid rgba(255,255,255,0.5);
     }
 
+    #exportCostCard label {
+      font-size: 0.97rem;
+    }
+    #exportCostCard input,
+    #exportCostCard select {
+      font-size: 1.06rem;
+    }
+    #exportCostCard .section-title {
+      font-size: 1.12rem;
+    }
+
 </style>
 </head>
 <body>
@@ -2211,6 +2356,7 @@
     <div class="title">${escapeHtml(report.title)}</div>
     <div class="info">
       <div class="em">仕入先：${escapeHtml(report.supplierName)}</div>
+      <div class="em">品目：${escapeHtml(report.itemCategory || "古紙")}</div>
       <div class="em">仕入条件：${escapeHtml(report.purchaseCondition)}</div>
       ${report.cyBasePrice ? `<div>CY 価格 ${escapeHtml(report.cyBasePrice)}</div>` : ''}
       <div>${escapeHtml(report.salePriceDisplay)}${report.fxRateDisplay ? `　為替：${escapeHtml(report.fxRateDisplay)}` : ''}</div>
@@ -2378,7 +2524,7 @@
           netUsdTon -= n(els.lcFee.value);
           steps.push(`LC手数料 = ${fmt(n(els.lcFee.value), 2)} USD/ton`);
         }
-        if (costs.includeMargin && term !== 'CY' && term !== 'WH') {
+        if (costs.includeMargin && !shouldUseJpyMargin()) {
           netUsdTon -= n(els.ourMargin.value);
           steps.push(`当社口銭 = ${fmt(n(els.ourMargin.value), 2)} USD/ton`);
         }
@@ -2391,7 +2537,7 @@
         steps.push(`ドル建て残額 = ${fmt(netUsdTon, 2)} USD/ton`);
         baseJpyTon = floor0(netUsdTon * fxRate);
         steps.push(`円換算 = ${fmt(netUsdTon, 2)} × ${fmt(fxRate, 4)} = ${fmt0(baseJpyTon)} 円/ton`);
-        if (costs.includeMargin && (term === 'CY' || term === 'WH')) {
+        if (costs.includeMargin && shouldUseJpyMargin()) {
           const marginJpyTon = n(els.ourMargin.value) * 1000;
           baseJpyTon -= marginJpyTon;
           steps.push(`当社口銭 = ${fmt(n(els.ourMargin.value), 2)} 円/kg = ${fmt(marginJpyTon, 2)} 円/ton`);
@@ -2400,7 +2546,7 @@
         baseJpyTon = salePriceTon;
         steps.push(`販売単価 = ${fmt(baseJpyTon, 2)} 円/ton換算`);
         if (costs.includeMargin) {
-          if (term === 'CY' || term === 'WH') {
+          if (shouldUseJpyMargin()) {
             const marginJpyTon = n(els.ourMargin.value) * 1000;
             baseJpyTon -= marginJpyTon;
             steps.push(`当社口銭 = ${fmt(n(els.ourMargin.value), 2)} 円/kg = ${fmt(marginJpyTon, 2)} 円/ton`);
@@ -2511,7 +2657,7 @@
       if (term === 'CIF' || term === 'CFR') {
         let neededUsdTon = neededJpyTon / fxRate;
         steps.push(`ドル換算前 = ${fmt(neededJpyTon, 2)} ÷ ${fmt(fxRate, 2)} = ${fmt(neededUsdTon, 2)} USD/ton`);
-        if (costs.includeMargin && term !== 'CY') {
+        if (costs.includeMargin && !shouldUseJpyMargin()) {
           neededUsdTon += n(els.ourMargin.value);
           steps.push(`当社口銭 = ${fmt(n(els.ourMargin.value), 2)} USD/ton`);
         }
@@ -2542,7 +2688,7 @@
         }
       } else {
         if (costs.includeMargin) {
-          if (term === 'CY' || term === 'WH') {
+          if (shouldUseJpyMargin()) {
             const marginJpyTon = n(els.ourMargin.value) * 1000;
             neededJpyTon += marginJpyTon;
             steps.push(`当社口銭 = ${fmt(n(els.ourMargin.value), 2)} 円/kg = ${fmt(marginJpyTon, 2)} 円/ton`);
@@ -2602,17 +2748,52 @@
       refreshUI();
     });
     els.unitType.addEventListener('change', refreshUI);
+    els.itemCategory.addEventListener('change', () => {
+      state.transportTouched = false;
+      els.purchaseTerm.value = 'YARD';
+      applyItemPreset();
+      refreshTransportCostByCurrentConditions();
+    });
+    function refreshTransportCostByCurrentConditions() {
+      refreshUI();
+      if (String(els.supplierSelect.value || '').trim()) {
+        applySelectedSupplier(false);
+      } else {
+        els.domesticTransportCost.value = '';
+        refreshTransportDefaults(false);
+      }
+      updateCalcButtonState();
+      saveData(false);
+    }
+
     els.salesTerm.addEventListener('change', () => {
       state.transportTouched = false;
-      refreshUI();
+      refreshTransportCostByCurrentConditions();
     });
     els.purchaseTerm.addEventListener('change', () => {
       state.transportTouched = false;
-      refreshUI();
+      refreshTransportCostByCurrentConditions();
+    });
+    els.containerLoad.addEventListener('input', () => {
+      if (els.domesticTransportType.value === 'DRAY' || els.domesticTransportType.value === 'SHORT') {
+        els.transportLoad.value = els.containerLoad.value;
+      }
+      updateCalcButtonState();
+      saveData(false);
+    });
+    els.containerLoad.addEventListener('change', () => {
+      if (els.domesticTransportType.value === 'DRAY' || els.domesticTransportType.value === 'SHORT') {
+        els.transportLoad.value = els.containerLoad.value;
+      }
+      updateCalcButtonState();
+      saveData(false);
     });
     els.domesticTransportType.addEventListener('change', () => {
       state.transportTouched = true;
       refreshTransportDefaults(true);
+      if (els.supplierSelect.value) {
+        applySelectedSupplier(false);
+      }
       updateCalcButtonState();
       saveData(false);
     });
@@ -2666,7 +2847,14 @@ els.fxRate.addEventListener('blur', () => {
       el.addEventListener('change', updateCalcButtonState);
     });
 
+    els.freightCurrency.addEventListener('change', () => {
+      updateSeaFreightInputState(true);
+      updateCalcButtonState();
+      saveData(false);
+    });
+
     [
+      els.itemCategory,
       els.currencyType,
       els.unitType,
       els.salesTerm,
