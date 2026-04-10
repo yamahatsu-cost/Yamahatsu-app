@@ -9,11 +9,11 @@
     <meta name="apple-mobile-web-app-title" content="コスト計算" />
   <meta name="application-name" content="輸出コスト計算" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
-  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
-  <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16.png" />
-  <link rel="icon" href="./favicon.ico" />
-  <link rel="manifest" href="./site.webmanifest" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=20260410-6" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png?v=20260410-6" />
+  <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16.png?v=20260410-6" />
+  <link rel="icon" href="./favicon.ico?v=20260410-6" />
+  <link rel="manifest" href="./site.webmanifest?v=20260410-6" />
   <title>輸出コスト計算</title>
 
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
@@ -2222,6 +2222,491 @@
     </table>
     <div class="result">${escapeHtml(report.resultMain)}</div>
   </div>
+
+  <div id="updatePopup" class="update-popup hidden" role="dialog" aria-live="polite" aria-label="更新通知">
+    <div class="update-popup-title">新しいバージョンがあります</div>
+    <div class="update-popup-text" id="updatePopupText">最新版を確認しています…</div>
+    <div class="update-popup-actions">
+      <button type="button" class="later-btn" id="updateLaterBtn">あとで</button>
+      <button type="button" class="update-btn" id="updateNowBtn">更新する</button>
+    </div>
+  </div>
+
+
+
+  <script>
+    (function () {
+      const CURRENT_VERSION = String(window.__APP_VERSION__ || '20260410-7');
+      const POPUP_HIDE_KEY = 'koshi-export-update-popup-hide-for-' + CURRENT_VERSION;
+
+      function getUpdateEls() {
+        return {
+          popup: document.getElementById('updatePopup'),
+          text: document.getElementById('updatePopupText'),
+          later: document.getElementById('updateLaterBtn'),
+          now: document.getElementById('updateNowBtn')
+        };
+      }
+
+      function normalizeFileName(path) {
+        return String(path || '').replace(/^.\//, '').split('?')[0].trim();
+      }
+
+      function showPopup(version, appFile) {
+        const ui = getUpdateEls();
+        if (!ui.popup || !ui.text || !ui.now || !ui.later) return;
+
+        const target = String(appFile || '').trim();
+        if (!target) return;
+
+        ui.text.textContent = '現在の版: ' + CURRENT_VERSION + ' / 最新版: ' + version;
+        ui.popup.classList.remove('hidden');
+
+        ui.later.onclick = function () {
+          try { sessionStorage.setItem(POPUP_HIDE_KEY, '1'); } catch (e) {}
+          ui.popup.classList.add('hidden');
+        };
+
+        ui.now.onclick = function () {
+          const separator = target.includes('?') ? '&' : '?';
+          location.href = target + separator + 'updated=' + Date.now();
+        };
+      }
+
+      async function checkForUpdate() {
+        const ui = getUpdateEls();
+        if (!ui.popup) return;
+
+        try {
+          const hidden = sessionStorage.getItem(POPUP_HIDE_KEY) === '1';
+          const res = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
+          if (!res.ok) return;
+          const data = await res.json();
+
+          const latestVersion = String(data.version || '').trim();
+          const latestFile = normalizeFileName(data.appFile || '');
+          const currentFile = normalizeFileName(location.pathname.split('/').pop() || '');
+
+          const hasUpdate = !!latestVersion && (
+            latestVersion !== CURRENT_VERSION ||
+            (latestFile && currentFile && latestFile !== currentFile)
+          );
+
+          if (hasUpdate && !hidden) {
+            showPopup(latestVersion, data.appFile);
+          } else if (ui.popup) {
+            ui.popup.classList.add('hidden');
+          }
+        } catch (e) {
+          // silent
+        }
+      }
+
+      window.addEventListener('load', function () {
+        setTimeout(checkForUpdate, 1200);
+        setInterval(checkForUpdate, 60000);
+      });
+    })();
+  <\/script>
+
+</body>
+</html>`;
+    }
+
+    function printEstimate() {
+      const warnings = validateInputs();
+      if (warnings.length) {
+        showWarning(warnings.join(' '));
+        return;
+      }
+
+      calculate();
+      const report = generateEstimateReportData();
+      const html = buildPrintHtml(report);
+      const iframe = document.createElement('iframe');
+      iframe.setAttribute('aria-hidden', 'true');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.style.opacity = '0';
+      document.body.appendChild(iframe);
+
+      const cleanup = () => setTimeout(() => { try { iframe.remove(); } catch (e) {} }, 1000);
+      const runPrint = () => {
+        try {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+          showWarning('印刷画面を開きました。', true);
+          setTimeout(() => hideWarning(), 1800);
+        } catch (err) {
+          console.error(err);
+          showWarning('印刷画面を開けませんでした。');
+        }
+        cleanup();
+      };
+
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(html);
+      doc.close();
+      iframe.onload = () => setTimeout(runPrint, 250);
+      setTimeout(runPrint, 700);
+    }
+
+    function calculateSellToBuy() {
+
+      const term = els.salesTerm.value;
+      const costs = getCostStructure();
+      const salePriceTon = getSalePriceTon();
+      const fxRate = n(els.fxRate.value);
+      const steps = [];
+      let baseJpyTon = 0;
+
+      if (els.currencyType.value === 'USD') {
+        const saleUsdTon = salePriceTon;
+        steps.push(`販売単価 = ${fmt(saleUsdTon, 2)} USD/ton`);
+        let netUsdTon = saleUsdTon;
+
+        if (costs.includeOverseas) {
+          netUsdTon -= n(els.overseasCom.value);
+          steps.push(`海外COM = ${fmt(n(els.overseasCom.value), 2)} USD/ton`);
+        }
+        if (costs.includeLC) {
+          netUsdTon -= n(els.lcFee.value);
+          steps.push(`LC手数料 = ${fmt(n(els.lcFee.value), 2)} USD/ton`);
+        }
+        if (costs.includeMargin && term !== 'CY' && term !== 'WH') {
+          netUsdTon -= n(els.ourMargin.value);
+          steps.push(`当社口銭 = ${fmt(n(els.ourMargin.value), 2)} USD/ton`);
+        }
+        if (costs.includeInsurance) {
+          const insuranceUsdTon = floor2(saleUsdTon * (n(els.insuranceRate.value) / 100));
+          netUsdTon -= insuranceUsdTon;
+          steps.push(`海上保険 = ${fmt(insuranceUsdTon, 2)} USD/ton`);
+        }
+
+        steps.push(`ドル建て残額 = ${fmt(netUsdTon, 2)} USD/ton`);
+        baseJpyTon = floor0(netUsdTon * fxRate);
+        steps.push(`円換算 = ${fmt(netUsdTon, 2)} × ${fmt(fxRate, 4)} = ${fmt0(baseJpyTon)} 円/ton`);
+        if (costs.includeMargin && (term === 'CY' || term === 'WH')) {
+          const marginJpyTon = n(els.ourMargin.value) * 1000;
+          baseJpyTon -= marginJpyTon;
+          steps.push(`当社口銭 = ${fmt(n(els.ourMargin.value), 2)} 円/kg = ${fmt(marginJpyTon, 2)} 円/ton`);
+        }
+      } else {
+        baseJpyTon = salePriceTon;
+        steps.push(`販売単価 = ${fmt(baseJpyTon, 2)} 円/ton換算`);
+        if (costs.includeMargin) {
+          if (term === 'CY' || term === 'WH') {
+            const marginJpyTon = n(els.ourMargin.value) * 1000;
+            baseJpyTon -= marginJpyTon;
+            steps.push(`当社口銭 = ${fmt(n(els.ourMargin.value), 2)} 円/kg = ${fmt(marginJpyTon, 2)} 円/ton`);
+          } else {
+            const marginJpyTon = n(els.ourMargin.value) * n(els.fxRate.value);
+            baseJpyTon -= marginJpyTon;
+            steps.push(`当社口銭 = ${fmt(n(els.ourMargin.value), 2)} USD/ton × ${fmt(n(els.fxRate.value), 2)} = ${fmt(marginJpyTon, 2)} 円/ton`);
+          }
+        }
+      }
+
+      const deductions = [];
+      if (costs.includeFreight) deductions.push({ name: '海上運賃', value: getSeaFreightJpyTon(fxRate) });
+      if (costs.includeDoOrThc) deductions.push({ name: term === 'FOB' ? 'THC' : 'Do Fee', value: getDoFeeJpyTon() });
+      if (costs.includeCustoms || costs.includeHandling) {
+        const fixed = getFixedJpyTon();
+        if (costs.includeCustoms) deductions.push({ name: '通関費', value: fixed.customs });
+        if (costs.includeHandling) deductions.push({ name: '取扱費', value: fixed.handling });
+      }
+      let resultJpyTon = baseJpyTon;
+
+      if (els.purchaseTerm.value === 'YARD' || els.purchaseTerm.value === 'YARD_WH' || els.purchaseTerm.value === 'WH') {
+        const domesticLines = getDomesticBreakdownLines();
+        const domesticTotal = getDomesticJpyTon();
+        domesticLines.forEach(line => steps.push(line));
+        resultJpyTon -= domesticTotal;
+      }
+
+      deductions.forEach(item => {
+        resultJpyTon -= item.value;
+        steps.push(`${item.name} = ${fmt(item.value, 2)} 円/ton`);
+      });
+
+      const resultJpyKg = floor2(resultJpyTon / 1000);
+      steps.push(``);
+      steps.push(`【最終単価】`);
+      steps.push(`仕入可能単価 = ${fmt(resultJpyTon, 2)} 円/ton ÷ 1000 = ${fmt(resultJpyKg, 2)} 円/kg`);
+
+      els.resultMain.textContent = `${fmt(resultJpyKg, 2)} 円/kg`;
+      if (els.purchaseTerm.value === 'YARD') {
+        const domesticJpyTon = getDomesticJpyTon();
+        const cyPriceJpyKg = round1((resultJpyTon + domesticJpyTon) / 1000);
+        els.resultSub.textContent = `仕入条件：店頭　CY価格 ${fmt1(cyPriceJpyKg)}円/kgベース`;
+      } else if (els.purchaseTerm.value === 'YARD_WH') {
+        const domesticJpyTon = getDomesticJpyTon();
+        const baseLabel = els.salesTerm.value === 'WH' ? '倉庫価格' : 'CY価格';
+        const priceJpyKg = round1((resultJpyTon + domesticJpyTon) / 1000);
+        els.resultSub.textContent = `仕入条件：店頭（倉庫渡し）　${baseLabel} ${fmt1(priceJpyKg)}円/kgベース`;
+      } else if (els.purchaseTerm.value === 'WH') {
+        const domesticJpyTon = getDomesticJpyTon();
+        const whPriceJpyKg = round1((resultJpyTon + domesticJpyTon) / 1000);
+        els.resultSub.textContent = `仕入条件：倉庫渡し　倉庫価格 ${fmt1(whPriceJpyKg)}円/kgベース`;
+      } else {
+        els.resultSub.textContent = `仕入条件：CY渡し`;
+      }
+      els.stepsArea.textContent = steps.join('\n');
+      els.resultArea.classList.remove('hidden');
+    }
+
+    function calculateBuyToSell() {
+      const costs = getCostStructure();
+      const term = els.salesTerm.value;
+      const fxRate = n(els.fxRate.value);
+      const steps = [];
+
+      let neededBaseTon = 0;
+      if (els.unitType.value === 'kg') {
+        neededBaseTon = n(els.buyPrice.value) * 1000;
+        steps.push(`仕入単価 = ${fmt(n(els.buyPrice.value), 2)} ${els.currencyType.value === 'USD' ? 'USD' : '円'}/kg → ${fmt(neededBaseTon, 2)} ${els.currencyType.value === 'USD' ? 'USD' : '円'}/ton`);
+      } else {
+        neededBaseTon = n(els.buyPrice.value);
+        steps.push(`仕入単価 = ${fmt(neededBaseTon, 2)} ${els.currencyType.value === 'USD' ? 'USD' : '円'}/ton`);
+      }
+
+      let neededJpyTon = els.currencyType.value === 'USD' ? neededBaseTon * fxRate : neededBaseTon;
+      if (els.currencyType.value === 'USD') {
+        steps.push(`円換算 = ${fmt(neededBaseTon, 2)} × ${fmt(fxRate, 4)} = ${fmt(neededJpyTon, 2)} 円/ton`);
+      }
+
+      if (els.purchaseTerm.value === 'YARD' || els.purchaseTerm.value === 'YARD_WH' || els.purchaseTerm.value === 'WH') {
+        const domestic = getDomesticJpyTon();
+        neededJpyTon += domestic;
+        const domesticLines = getDomesticBreakdownLines();
+        domesticLines.forEach(line => steps.push(line));
+      }
+      if (costs.includeCustoms || costs.includeHandling) {
+        const fixed = getFixedJpyTon();
+        if (costs.includeCustoms) {
+          neededJpyTon += fixed.customs;
+          steps.push(`通関費 = ${fmt(fixed.customs, 2)} 円/ton`);
+        }
+        if (costs.includeHandling) {
+          neededJpyTon += fixed.handling;
+          steps.push(`取扱費 = ${fmt(fixed.handling, 2)} 円/ton`);
+        }
+      }
+      if (costs.includeDoOrThc) {
+        const doFee = getDoFeeJpyTon();
+        neededJpyTon += doFee;
+        steps.push(`${term === 'FOB' ? 'THC' : 'Do Fee'}加算 = ${fmt(doFee, 2)} 円/ton`);
+      }
+      if (costs.includeFreight) {
+        const freight = getSeaFreightJpyTon(fxRate);
+        neededJpyTon += freight;
+        steps.push(`海上運賃 = ${fmt(freight, 2)} 円/ton`);
+      }
+
+      if (term === 'CIF' || term === 'CFR') {
+        let neededUsdTon = neededJpyTon / fxRate;
+        steps.push(`ドル換算前 = ${fmt(neededJpyTon, 2)} ÷ ${fmt(fxRate, 2)} = ${fmt(neededUsdTon, 2)} USD/ton`);
+        if (costs.includeMargin && term !== 'CY') {
+          neededUsdTon += n(els.ourMargin.value);
+          steps.push(`当社口銭 = ${fmt(n(els.ourMargin.value), 2)} USD/ton`);
+        }
+        if (costs.includeLC) {
+          neededUsdTon += n(els.lcFee.value);
+          steps.push(`LC手数料 = ${fmt(n(els.lcFee.value), 2)} USD/ton`);
+        }
+        if (costs.includeOverseas) {
+          neededUsdTon += n(els.overseasCom.value);
+          steps.push(`海外COM = ${fmt(n(els.overseasCom.value), 2)} USD/ton`);
+        }
+        if (costs.includeInsurance) {
+          const divisor = 1 - (n(els.insuranceRate.value) / 100);
+          neededUsdTon = divisor > 0 ? neededUsdTon / divisor : neededUsdTon;
+          steps.push(`販売可能単価 = ${fmt(neededUsdTon, 2)} USD/ton`);
+        }
+        const resultUsdTon = floor2(neededUsdTon);
+        steps.push(``);
+        steps.push(`【最終単価】`);
+        steps.push(`販売可能単価 = ${fmt(resultUsdTon, 2)} USD/ton`);
+        els.resultMain.textContent = `${fmt(resultUsdTon, 2)} USD/ton`;
+        if (els.purchaseTerm.value === 'YARD' || els.purchaseTerm.value === 'YARD_WH' || els.purchaseTerm.value === 'WH') {
+          const domesticJpyTon = getDomesticJpyTon();
+          const cyPriceJpyKg = round1((n(els.buyPrice.value) + (domesticJpyTon / 1000)));
+          els.resultSub.textContent = `販売条件：${getSalesConditionLabel()}　${(els.purchaseTerm.value === 'WH' || (els.purchaseTerm.value === 'YARD_WH' && els.salesTerm.value === 'WH')) ? '倉庫価格' : 'CY価格'} ${fmt1(cyPriceJpyKg)}円/kgベース`;
+        } else {
+          els.resultSub.textContent = `販売条件：${getSalesConditionLabel()}`;
+        }
+      } else {
+        if (costs.includeMargin) {
+          if (term === 'CY' || term === 'WH') {
+            const marginJpyTon = n(els.ourMargin.value) * 1000;
+            neededJpyTon += marginJpyTon;
+            steps.push(`当社口銭 = ${fmt(n(els.ourMargin.value), 2)} 円/kg = ${fmt(marginJpyTon, 2)} 円/ton`);
+          } else {
+            const marginJpyTon = n(els.ourMargin.value) * n(els.fxRate.value);
+            neededJpyTon += marginJpyTon;
+            steps.push(`当社口銭 = ${fmt(n(els.ourMargin.value), 2)} USD/ton × ${fmt(n(els.fxRate.value), 2)} = ${fmt(marginJpyTon, 2)} 円/ton`);
+          }
+        }
+        const resultJpyKg = floor2(neededJpyTon / 1000);
+        steps.push(``);
+        steps.push(`【最終単価】`);
+        steps.push(`販売可能単価 = ${fmt(neededJpyTon, 2)} 円/ton ÷ 1000 = ${fmt(resultJpyKg, 2)} 円/kg`);
+        els.resultMain.textContent = `${fmt(resultJpyKg, 2)} 円/kg`;
+        if (els.purchaseTerm.value === 'YARD' || els.purchaseTerm.value === 'YARD_WH' || els.purchaseTerm.value === 'WH') {
+          const domesticJpyTon = getDomesticJpyTon();
+          const cyPriceJpyKg = round1((n(els.buyPrice.value) + (domesticJpyTon / 1000)));
+          els.resultSub.textContent = `販売条件：${getSalesConditionLabel()}　${(els.purchaseTerm.value === 'WH' || (els.purchaseTerm.value === 'YARD_WH' && els.salesTerm.value === 'WH')) ? '倉庫価格' : 'CY価格'} ${fmt1(cyPriceJpyKg)}円/kgベース`;
+        } else {
+          els.resultSub.textContent = `販売条件：${getSalesConditionLabel()}`;
+        }
+      }
+
+      els.stepsArea.textContent = steps.join('\n');
+      els.resultArea.classList.remove('hidden');
+    }
+
+    function calculate() {
+      const warnings = validateInputs();
+      if (warnings.length) {
+        showWarning(warnings.join(' '));
+        els.resultArea.classList.add('hidden');
+        return;
+      }
+      hideWarning();
+      saveData(false);
+      if (state.calcMode === 'SELL_TO_BUY') calculateSellToBuy();
+      else calculateBuyToSell();
+    }
+
+    els.modeSellBtn.addEventListener('click', () => {
+      state.calcMode = 'SELL_TO_BUY';
+      els.currencyType.value = 'USD';
+      els.unitType.value = 'ton';
+      refreshUI();
+    });
+    els.modeBuyBtn.addEventListener('click', () => {
+      state.calcMode = 'BUY_TO_SELL';
+      els.currencyType.value = 'JPY';
+      els.unitType.value = 'kg';
+      refreshUI();
+    });
+    els.currencyType.addEventListener('change', () => {
+      if (state.calcMode === 'SELL_TO_BUY' && els.currencyType.value === 'USD') {
+        els.unitType.value = 'ton';
+      }
+      refreshUI();
+    });
+    els.unitType.addEventListener('change', refreshUI);
+    els.salesTerm.addEventListener('change', () => {
+      state.transportTouched = false;
+      refreshUI();
+    });
+    els.purchaseTerm.addEventListener('change', () => {
+      state.transportTouched = false;
+      refreshUI();
+    });
+    els.domesticTransportType.addEventListener('change', () => {
+      state.transportTouched = true;
+      refreshTransportDefaults(true);
+      updateCalcButtonState();
+      saveData(false);
+    });
+    function adjustFxRate(delta) {
+      const current = String(els.fxRate.value).trim() === '' ? 0 : n(els.fxRate.value);
+      const next = Math.max(0, Math.round((current + delta) * 100) / 100);
+      els.fxRate.value = next.toFixed(2);
+      updateCalcButtonState();
+      saveData(false);
+    }
+
+    els.fetchFxBtn.addEventListener('click', fetchFxRate);
+    els.fxDownBtn.addEventListener('click', () => adjustFxRate(-0.5));
+    els.fxUpBtn.addEventListener('click', () => adjustFxRate(0.5));
+    els.fxRate.addEventListener('input', formatFx);
+    els.fxRate.addEventListener('blur', formatFx);
+
+// --- UFJ仲値 小数2桁自動丸め ---
+els.fxRate.addEventListener('blur', () => {
+  let v = parseFloat(els.fxRate.value);
+  if (!isNaN(v)) {
+    els.fxRate.value = v.toFixed(2);
+  }
+});
+
+    els.calcBtn.addEventListener('click', calculate);
+    els.resetBtn.addEventListener('click', resetData);
+    els.printBtn.addEventListener('click', printEstimate);
+    document.getElementById('resetBtnTop').addEventListener('click', resetData);
+    window.addEventListener('beforeunload', () => saveData(false));
+
+    [
+      els.salePrice,
+      els.buyPrice,
+      els.fxRate,
+      els.containerLoad,
+      els.overseasCom,
+      els.ourMargin,
+      els.seaFreight,
+      els.doFee,
+      els.customsFee,
+      els.handlingFee,
+      els.insuranceRate,
+      els.domesticTransportCost,
+      els.storageFee,
+      els.shortDrayCost,
+      els.transportLoad,
+      els.lotQty
+    ].forEach(el => {
+      el.addEventListener('input', updateCalcButtonState);
+      el.addEventListener('change', updateCalcButtonState);
+    });
+
+    [
+      els.currencyType,
+      els.unitType,
+      els.salesTerm,
+      els.purchaseTerm,
+      els.lcFee,
+      els.freightCurrency,
+      els.domesticTransportType
+    ].forEach(el => el.addEventListener('change', updateCalcButtonState));
+
+
+    function openSupplierMasterModal() {
+      els.supplierMasterModal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeSupplierMasterModal() {
+      els.supplierMasterModal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    els.supplierSelect.addEventListener('change', () => applySelectedSupplier(false));
+    els.openSupplierMasterBtn.addEventListener('click', openSupplierMasterModal);
+    els.closeSupplierMasterBtn.addEventListener('click', closeSupplierMasterModal);
+    els.supplierMasterModal.addEventListener('click', e => {
+      if (e.target === els.supplierMasterModal) closeSupplierMasterModal();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !els.supplierMasterModal.classList.contains('hidden')) {
+        closeSupplierMasterModal();
+      }
+    });
+    els.addSupplierRowBtn.addEventListener('click', () => {
+      els.supplierMasterBody.insertAdjacentHTML('beforeend', supplierRowHtml(normalizeSupplierRow({ transportType: 'DRAY', transportLoad: '22' })));
+      bindSupplierEditorRowEvents();
+    });
+    els.saveSupplierMasterBtn.addEventListener('click', () => saveSupplierMaster(true));
+    els.saveSupplierTransportBtn.addEventListener('click', saveCurrentTransportToSupplier);
+
+    loadSupplierMaster();
+    loadData();
+  </script>
 
   <div id="updatePopup" class="update-popup hidden" role="dialog" aria-live="polite" aria-label="更新通知">
     <div class="update-popup-title">新しいバージョンがあります</div>
