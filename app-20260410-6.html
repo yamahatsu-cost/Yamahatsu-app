@@ -7,14 +7,14 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="theme-color" content="#2233df" />
     <meta name="apple-mobile-web-app-title" content="コスト計算" />
-  <meta name="application-name" content="古紙輸出コスト計算" />
+  <meta name="application-name" content="輸出コスト計算" />
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=20260410-6" />
   <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png?v=20260410-6" />
   <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16.png?v=20260410-6" />
   <link rel="icon" href="./favicon.ico?v=20260410-6" />
   <link rel="manifest" href="./site.webmanifest?v=20260410-6" />
-  <title>古紙輸出コスト計算</title>
+  <title>輸出コスト計算</title>
 
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -29,7 +29,7 @@
         }
       } catch (e) {}
 
-      window.__APP_VERSION__ = '20260410-6';
+      window.__APP_VERSION__ = '20260410-7';
     })();
   </script>
 
@@ -678,7 +678,7 @@
 <body>
   <div class="app">
     <div class="app-header">
-      <h1>古紙輸出コスト計算</h1>
+      <h1>輸出コスト計算</h1>
       <div class="subtitle">山發日本株式会社 社内アプリ</div>
       <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
         <span style="display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.18); font-size:.76rem;">営業ツールUI 完全版</span>
@@ -696,7 +696,7 @@
         <button id="resetBtnTop" class="ghost" type="button">リセット</button>
       </div>
       <div class="footer-note">入力内容はこの端末内に自動保存されます。為替取得のみインターネット接続が必要です。</div>
-      <div class="footer-note" style="margin-top:10px;">アプリ版: 20260410-6</div>
+      <div class="footer-note" style="margin-top:10px;">アプリ版: 20260410-7</div>
     </div>
 
     <div class="card">
@@ -734,6 +734,7 @@
             <option value="CFR">CFR</option>
             <option value="FOB">FOB</option>
             <option value="CY">CY渡し</option>
+            <option value="WH">倉庫渡し</option>
           </select>
         </div>
         <div class="field" id="lotQtyField">
@@ -745,6 +746,8 @@
           <label for="purchaseTerm">仕入条件</label>
           <select id="purchaseTerm">
             <option value="YARD">店頭</option>
+            <option value="YARD_WH">店頭（倉庫渡し）</option>
+            <option value="WH">倉庫渡し</option>
             <option value="CY">CY渡し</option>
           </select>
           <div class="help hidden" id="purchaseTermHelp"></div>
@@ -843,11 +846,13 @@
           </select>
           <div class="help">仕入先を選ぶと、登録済みの輸送費が自動入力されます。運送費の登録はマスタ登録から行ってください。</div>
         </div>
-        <div class="field">
-          <label for="domesticTransportType">国内輸送</label>
+        <div class="field" id="domesticTransportTypeField">
+          <label for="domesticTransportType" id="domesticTransportTypeLabel">国内輸送</label>
           <select id="domesticTransportType">
             <option value="DRAY">ドレー</option>
+            <option value="SHORT">ショートドレー</option>
             <option value="TRUCK">大型</option>
+            <option value="4T">4t車</option>
           </select>
         </div>
       </div>
@@ -858,9 +863,20 @@
           <input id="transportLoad" type="number" step="0.5" value="22" />
         </div>
         <div class="field">
-          <label for="domesticTransportCost">国内輸送費（車単価）</label>
+          <label for="domesticTransportCost" id="domesticTransportCostLabel">国内輸送費（車単価）</label>
           <input id="domesticTransportCost" type="number" step="1000" value="" placeholder="例）35000" />
           <input id="transportUnitPreview" type="hidden" value="" />
+        </div>
+      </div>
+
+      <div class="row two hidden" id="storageShortRow">
+        <div class="field" id="storageFeeField">
+          <label for="storageFee">入出庫・保管（円/ton)</label>
+          <input id="storageFee" type="number" step="100" value="" placeholder="例）2200" />
+        </div>
+        <div class="field" id="shortDrayCostField">
+          <label for="shortDrayCost">ショートドレー（車単位）</label>
+          <input id="shortDrayCost" type="number" step="1000" value="" placeholder="例）25000" />
         </div>
       </div>
 
@@ -940,7 +956,7 @@
       <div class="section-title">7. 補足</div>
       <div class="muted-box">
         ・販売単価→仕入可能単価では、販売単価から必要経費を差し引き、最終的に円/kgを表示します。<br />
-        ・仕入単価→販売単価では、仕入単価から逆算し、CIF/CFR は USD/ton、FOB/CY は 円/kg で表示します。<br />
+        ・仕入単価→販売単価では、仕入単価から逆算し、CIF/CFR は USD/ton、FOB/CY/倉庫渡し は 円/kg で表示します。<br />
         ・Lot・件は同義として扱い、船積み単位数量で重量単価に換算して計算します。<br />
         ・為替仲値欄は手入力向けです。参考相場は前営業日の為替から▲1円差引いたレートです。<br />
 	・ドレー単価マスタは各自のスマホ/PCに保存され、他の方と共有されません。	
@@ -997,8 +1013,16 @@
       handlingFee: document.getElementById('handlingFee'),
       insuranceField: document.getElementById('insuranceField'),
       insuranceRate: document.getElementById('insuranceRate'),
+      domesticTransportTypeField: document.getElementById('domesticTransportTypeField'),
+      domesticTransportTypeLabel: document.getElementById('domesticTransportTypeLabel'),
       domesticTransportType: document.getElementById('domesticTransportType'),
       domesticTransportCost: document.getElementById('domesticTransportCost'),
+      domesticTransportCostLabel: document.getElementById('domesticTransportCostLabel'),
+      storageShortRow: document.getElementById('storageShortRow'),
+      storageFeeField: document.getElementById('storageFeeField'),
+      storageFee: document.getElementById('storageFee'),
+      shortDrayCostField: document.getElementById('shortDrayCostField'),
+      shortDrayCost: document.getElementById('shortDrayCost'),
       transportLoad: document.getElementById('transportLoad'),
       supplierSelect: document.getElementById('supplierSelect'),
       openSupplierMasterBtn: document.getElementById('openSupplierMasterBtn'),
@@ -1036,7 +1060,8 @@
       calcMode: 'SELL_TO_BUY',
       marginMode: 'USD',
       supplierMaster: [],
-      selectedSupplierId: ''
+      selectedSupplierId: '',
+      transportTouched: false
     };
 
     function n(v) {
@@ -1080,6 +1105,26 @@
       return els.salesTerm.value === 'CY';
     }
 
+    function isWarehouseSalesTerm() {
+      return els.salesTerm.value === 'WH';
+    }
+
+    function isWarehousePurchaseTerm() {
+      return els.purchaseTerm.value === 'WH';
+    }
+
+    function isYardWarehousePurchaseTerm() {
+      return els.purchaseTerm.value === 'YARD_WH';
+    }
+
+    function isYardToWarehouse() {
+      return els.purchaseTerm.value === 'YARD' && els.salesTerm.value === 'WH';
+    }
+
+    function isYardToNonWarehouse() {
+      return els.purchaseTerm.value === 'YARD' && els.salesTerm.value !== 'WH';
+    }
+
     function getLotUnitLabel() {
       return 'ton';
     }
@@ -1114,7 +1159,7 @@
       return {
         id: row.id || uid(),
         name: String(row.name || '').trim(),
-        transportType: row.transportType === 'TRUCK' ? 'TRUCK' : 'DRAY',
+        transportType: ['TRUCK','SHORT','4T','DRAY'].includes(row.transportType) ? row.transportType : 'DRAY',
         transportCost: String(row.transportCost ?? '').trim(),
         transportLoad: String(row.transportLoad ?? '').trim()
       };
@@ -1173,7 +1218,9 @@
         <td>
           <select class="supplier-transport-type">
             <option value="DRAY" ${s.transportType === 'DRAY' ? 'selected' : ''}>ドレー</option>
+            <option value="SHORT" ${s.transportType === 'SHORT' ? 'selected' : ''}>ショートドレー</option>
             <option value="TRUCK" ${s.transportType === 'TRUCK' ? 'selected' : ''}>大型</option>
+            <option value="4T" ${s.transportType === '4T' ? 'selected' : ''}>4t車</option>
           </select>
         </td>
         <td><input type="number" class="supplier-transport-cost" step="1000" value="${escapeHtml(s.transportCost)}" placeholder="例）35000" /></td>
@@ -1200,8 +1247,10 @@
           const tr = e.target.closest('tr');
           const loadInput = tr?.querySelector('.supplier-transport-load');
           if (!loadInput) return;
-          if (e.target.value === 'DRAY' && (!loadInput.value || Number(loadInput.value) === 12)) loadInput.value = '22';
-          if (e.target.value === 'TRUCK' && (!loadInput.value || Number(loadInput.value) === 22)) loadInput.value = '12';
+          if ((e.target.value === 'DRAY' || e.target.value === 'SHORT') && (!loadInput.value || Number(loadInput.value) === 12 || Number(loadInput.value) === 4)) loadInput.value = '22';
+          if (e.target.value === 'TRUCK' && (!loadInput.value || Number(loadInput.value) === 22 || Number(loadInput.value) === 4)) loadInput.value = '12';
+          if (e.target.value === '4T' && (!loadInput.value || Number(loadInput.value) === 22 || Number(loadInput.value) === 12)) loadInput.value = '4';
+          if (e.target.value === 'SHORT') loadInput.value = '22';
         });
       });
     }
@@ -1237,8 +1286,9 @@
         els.domesticTransportCost.value = supplier.transportCost || '';
       }
       if (!autoOnly || String(els.transportLoad.value).trim() === '') {
-        els.transportLoad.value = supplier.transportLoad || (supplier.transportType === 'TRUCK' ? '12' : '22');
+        els.transportLoad.value = supplier.transportLoad || ((supplier.transportType === 'TRUCK') ? '12' : ((supplier.transportType === '4T') ? '4' : '22'));
       }
+      state.transportTouched = false;
       refreshUI();
       flashSupplierAutoFilledFields();
       saveData(false);
@@ -1310,6 +1360,8 @@
         insuranceRate: els.insuranceRate.value,
         domesticTransportType: els.domesticTransportType.value,
         domesticTransportCost: els.domesticTransportCost.value,
+        storageFee: els.storageFee.value,
+        shortDrayCost: els.shortDrayCost.value,
         transportLoad: els.transportLoad.value,
         selectedSupplierId: els.supplierSelect.value
       };
@@ -1338,6 +1390,8 @@
       els.insuranceRate.value = data.insuranceRate || '0.11';
       els.domesticTransportType.value = data.domesticTransportType || 'DRAY';
       els.domesticTransportCost.value = data.domesticTransportCost || '';
+      els.storageFee.value = data.storageFee || '';
+      els.shortDrayCost.value = data.shortDrayCost || '';
       els.transportLoad.value = data.transportLoad || '22';
       state.selectedSupplierId = data.selectedSupplierId || '';
       renderSupplierSelect();
@@ -1385,6 +1439,8 @@
       els.insuranceRate.value = '0.11';
       els.domesticTransportType.value = 'DRAY';
       els.domesticTransportCost.value = '';
+      els.storageFee.value = '';
+      els.shortDrayCost.value = '';
       els.transportLoad.value = '22';
       state.selectedSupplierId = '';
       if (els.supplierSelect) els.supplierSelect.value = '';
@@ -1402,16 +1458,17 @@
     function setActive(btn, active) { btn.classList.toggle('active', active); }
 
     function refreshTransportDefaults(changedByUser = false) {
-      if (els.domesticTransportType.value === 'DRAY') {
-        els.transportUnitPreview.value = '';
-        if (!changedByUser || n(els.transportLoad.value) === 12 || n(els.transportLoad.value) === 0) {
-          els.transportLoad.value = '22';
-        }
+      const transportType = els.domesticTransportType.value;
+
+      els.transportLoad.readOnly = true;
+      els.transportUnitPreview.value = '円/車';
+
+      if (transportType === 'TRUCK') {
+        els.transportLoad.value = '12';
+      } else if (transportType === '4T') {
+        els.transportLoad.value = '4';
       } else {
-        els.transportUnitPreview.value = '円/車';
-        if (!changedByUser || n(els.transportLoad.value) === 22 || n(els.transportLoad.value) === 0) {
-          els.transportLoad.value = '12';
-        }
+        els.transportLoad.value = '22';
       }
     }
 
@@ -1464,7 +1521,7 @@
       const targets = [
         els.salePrice,
         els.buyPrice,
-        ...(els.salesTerm.value !== 'CY' ? [els.fxRate] : []),
+        ...(els.salesTerm.value !== 'CY' && els.salesTerm.value !== 'WH' ? [els.fxRate] : []),
         els.containerLoad,
         els.overseasCom,
         els.ourMargin,
@@ -1474,6 +1531,8 @@
         els.handlingFee,
         els.insuranceRate,
         els.domesticTransportCost,
+        els.storageFee,
+        els.shortDrayCost,
         els.transportLoad,
         els.lotQty,
         els.currencyType,
@@ -1502,6 +1561,8 @@
         els.handlingFee,
         els.insuranceRate,
         els.domesticTransportCost,
+        els.storageFee,
+        els.shortDrayCost,
         els.transportLoad,
         els.lotQty,
         els.currencyType,
@@ -1542,28 +1603,27 @@
       const isCFR = term === 'CFR';
       const isFOB = term === 'FOB';
       const isCY = term === 'CY';
+      const isWH = term === 'WH';
 
-      
-
-      const usdMode = els.currencyType.value === 'USD';
-      const needsFx = !isCY;
-      els.fxRateField.classList.remove('hidden');
-      els.fetchFxBtn.disabled = false;
-      els.fxRate.disabled = false;
-      els.fxStatus.textContent = els.fxStatus.textContent || '';
+      const needsFx = !isCY && !isWH;
+      els.fxRateField.classList.toggle('hidden', !needsFx);
+      els.fetchFxBtn.disabled = !needsFx;
+      els.fxRate.disabled = !needsFx;
+      if (!needsFx) els.fxStatus.textContent = '';
 
       const showOverseas = isCIF || isCFR;
       els.overseasComField.classList.toggle('hidden', !showOverseas);
       els.lcFeeField.classList.toggle('hidden', !showOverseas);
       els.ourMarginField.classList.remove('hidden');
-      syncMarginMode(isCY);
+      syncMarginMode(isCY || isWH);
       els.freightCurrencyField.classList.toggle('hidden', !(isCIF || isCFR));
       els.seaFreightField.classList.toggle('hidden', !(isCIF || isCFR));
       els.doFeeField.classList.toggle('hidden', !(isCIF || isCFR || isFOB));
       els.insuranceField.classList.toggle('hidden', !isCIF);
-      els.customsFeeField.classList.toggle('hidden', isCY);
-      els.handlingFeeField.classList.toggle('hidden', isCY);
-      els.lotQtyField.classList.toggle('hidden', isCY);
+      els.customsFeeField.classList.toggle('hidden', isCY || isWH);
+      els.handlingFeeField.classList.toggle('hidden', isCY || isWH);
+      els.lotQtyField.classList.toggle('hidden', isCY || isWH);
+      els.containerLoad.parentElement.classList.toggle('hidden', isCY || isWH);
       els.doFeeLabel.textContent = isFOB ? 'THC (円/40F)' : 'Do Fee (円/Lot)';
 
       if (isFOB) {
@@ -1575,14 +1635,65 @@
       }
 
       Array.from(els.purchaseTerm.options).forEach(opt => {
-        if (opt.value === 'CY') opt.disabled = isCY;
+        opt.disabled = (opt.value === 'CY' && isWH);
       });
-      if (isCY && els.purchaseTerm.value === 'CY') {
+      Array.from(els.salesTerm.options).forEach(opt => {
+        opt.disabled = (opt.value === 'WH' && els.purchaseTerm.value === 'WH');
+      });
+
+      if (isWH && els.purchaseTerm.value === 'CY') {
         els.purchaseTerm.value = 'YARD';
+      }
+      if (els.purchaseTerm.value === 'WH' && els.salesTerm.value === 'WH') {
+        els.salesTerm.value = 'CIF';
       }
 
       const showDomesticTransport = !(els.purchaseTerm.value === 'CY');
       els.domesticTransportCard.classList.toggle('hidden', !showDomesticTransport);
+
+      const showStorageFee = els.purchaseTerm.value === 'WH' || els.purchaseTerm.value === 'YARD_WH';
+      const showShortDrayField = els.purchaseTerm.value === 'YARD_WH' && els.salesTerm.value !== 'WH';
+      const showStorageRow = showStorageFee || showShortDrayField;
+      els.storageShortRow.classList.toggle('hidden', !showStorageRow);
+      els.storageFeeField.classList.toggle('hidden', !showStorageFee);
+      els.shortDrayCostField.classList.toggle('hidden', !showShortDrayField);
+
+      els.domesticTransportTypeField.classList.remove('hidden');
+      els.domesticTransportTypeLabel.textContent = '国内輸送';
+      els.domesticTransportCostLabel.textContent = '国内輸送費（車単価）';
+      els.domesticTransportCost.placeholder = '例）35000';
+
+      let recommendedTransportType = els.domesticTransportType.value || 'DRAY';
+      if (els.purchaseTerm.value === 'YARD_WH') {
+        recommendedTransportType = 'TRUCK';
+        els.domesticTransportType.disabled = false;
+        if (els.salesTerm.value === 'WH') {
+          els.storageShortRow.classList.add('hidden');
+          els.storageFeeField.classList.add('hidden');
+        }
+      } else if (els.purchaseTerm.value === 'YARD' && els.salesTerm.value === 'WH') {
+        recommendedTransportType = 'TRUCK';
+        els.domesticTransportType.disabled = false;
+      } else if (els.purchaseTerm.value === 'YARD') {
+        recommendedTransportType = 'DRAY';
+        els.domesticTransportType.disabled = false;
+      } else if (els.purchaseTerm.value === 'WH') {
+        recommendedTransportType = 'SHORT';
+        els.domesticTransportType.disabled = false;
+      } else {
+        els.domesticTransportType.disabled = false;
+      }
+
+      if (!state.transportTouched) {
+        els.domesticTransportType.value = recommendedTransportType;
+      }
+
+      if (!(els.purchaseTerm.value === 'WH' || (els.purchaseTerm.value === 'YARD_WH' && els.salesTerm.value !== 'WH'))) {
+        els.storageFee.value = '';
+      }
+      if (!(els.purchaseTerm.value === 'YARD_WH' && els.salesTerm.value !== 'WH')) {
+        els.shortDrayCost.value = '';
+      }
 
       refreshTransportDefaults(false);
 
@@ -1672,10 +1783,11 @@
       if (hasBlankVisibleInputs()) warnings.push('表示中の入力項目をすべて入力してください。');
       if (state.calcMode === 'SELL_TO_BUY' && n(els.salePrice.value) <= 0) warnings.push('販売単価を入力してください。');
       if (state.calcMode === 'BUY_TO_SELL' && n(els.buyPrice.value) <= 0) warnings.push('仕入単価を入力してください。');
-      if (!isCyTerm() && n(els.lotQty.value) <= 0) warnings.push('船積みLOTを入力してください。');
-      if (els.salesTerm.value !== 'CY' && n(els.fxRate.value) <= 0) warnings.push('為替入力が必要です。');
+      if (!isCyTerm() && !isWarehouseSalesTerm() && n(els.lotQty.value) <= 0) warnings.push('船積みLOTを入力してください。');
+      if (els.salesTerm.value !== 'CY' && els.salesTerm.value !== 'WH' && n(els.fxRate.value) <= 0) warnings.push('為替入力が必要です。');
       if ((els.salesTerm.value === 'CIF' || els.salesTerm.value === 'CFR' || els.salesTerm.value === 'FOB') && n(els.containerLoad.value) <= 0) warnings.push('コンテナ積載量を入力してください。');
-      if (els.purchaseTerm.value === 'YARD' && n(els.transportLoad.value) <= 0) warnings.push('積載量を入力してください。');
+      if ((els.purchaseTerm.value === 'YARD' || els.purchaseTerm.value === 'YARD_WH' || els.purchaseTerm.value === 'WH') && n(els.transportLoad.value) <= 0) warnings.push('積載量を入力してください。');
+      if ((els.purchaseTerm.value === 'WH' || (els.purchaseTerm.value === 'YARD_WH' && els.salesTerm.value !== 'WH')) && String(els.storageFee.value).trim() === '') warnings.push('入出庫・保管を入力してください。');
       return warnings;
     }
 
@@ -1688,8 +1800,8 @@
         includeFreight: term === 'CIF' || term === 'CFR',
         includeDoOrThc: term === 'CIF' || term === 'CFR' || term === 'FOB',
         includeInsurance: term === 'CIF',
-        includeCustoms: term !== 'CY',
-        includeHandling: term !== 'CY'
+        includeCustoms: term !== 'CY' && term !== 'WH',
+        includeHandling: term !== 'CY' && term !== 'WH'
       };
     }
 
@@ -1730,10 +1842,65 @@
       };
     }
 
-    function getDomesticJpyTon() {
+    function getTransportLoadValue() {
       const load = n(els.transportLoad.value);
-      if (load <= 0) return 0;
-      return n(els.domesticTransportCost.value) / load;
+      return load > 0 ? load : 0;
+    }
+
+    function getDomesticBreakdown() {
+      const load = getTransportLoadValue();
+      const transportCost = n(els.domesticTransportCost.value);
+      const storageFee = n(els.storageFee.value);
+      const shortDrayCost = n(els.shortDrayCost.value);
+      const domesticPerTon = load > 0 ? (transportCost / load) : 0;
+      const shortDrayPerTon = shortDrayCost > 0 ? (shortDrayCost / 22) : 0;
+      const showStorage = !els.storageFeeField.classList.contains('hidden') && String(els.storageFee.value).trim() !== '';
+      const showShortDray = !els.shortDrayCostField.classList.contains('hidden') && String(els.shortDrayCost.value).trim() !== '';
+      return {
+        load,
+        transportCost,
+        domesticPerTon,
+        storageFee,
+        shortDrayCost,
+        shortDrayPerTon,
+        showStorage,
+        showShortDray,
+        total: domesticPerTon + (showStorage ? storageFee : 0) + (showShortDray ? shortDrayPerTon : 0)
+      };
+    }
+
+    function getDomesticBreakdownLines() {
+      const b = getDomesticBreakdown();
+      const lines = [];
+      if (b.load > 0 && String(els.domesticTransportCost.value).trim() !== '') {
+        lines.push(`国内輸送費 = ${fmt0(b.transportCost)} ÷ ${fmt0(b.load)} = ${fmt(b.domesticPerTon, 2)} 円/ton`);
+      }
+      if (b.showStorage) {
+        lines.push(`入出庫・保管 = ${fmt0(b.storageFee)} 円/ton`);
+      }
+      if (b.showShortDray) {
+        lines.push(`ショートドレー = ${fmt0(b.shortDrayCost)} ÷ 22 = ${fmt(b.shortDrayPerTon, 2)} 円/ton`);
+      }
+      return lines;
+    }
+
+    function getDomesticBreakdownRows() {
+      const b = getDomesticBreakdown();
+      const rows = [];
+      if (b.load > 0 && String(els.domesticTransportCost.value).trim() !== '') {
+        rows.push({ label: '国内輸送費', value: `${fmt0(b.transportCost)} ÷ ${fmt0(b.load)} = ${fmt(b.domesticPerTon, 2)} 円/ton` });
+      }
+      if (b.showStorage) {
+        rows.push({ label: '入出庫・保管', value: `${fmt0(b.storageFee)} 円/ton` });
+      }
+      if (b.showShortDray) {
+        rows.push({ label: 'ショートドレー', value: `${fmt0(b.shortDrayCost)} ÷ 22 = ${fmt(b.shortDrayPerTon, 2)} 円/ton` });
+      }
+      return rows;
+    }
+
+    function getDomesticJpyTon() {
+      return getDomesticBreakdown().total;
     }
 
 
@@ -1749,17 +1916,19 @@
     }
 
     function getSalesConditionLabel() {
-      const labels = { CIF: 'CIF', CFR: 'CFR', FOB: 'FOB', CY: 'CY渡し' };
+      const labels = { CIF: 'CIF', CFR: 'CFR', FOB: 'FOB', CY: 'CY渡し', WH: '倉庫渡し' };
       return labels[els.salesTerm.value] || els.salesTerm.value;
     }
 
     function getPurchaseConditionLabel(resultJpyKg) {
       if (els.purchaseTerm.value === 'CY') return 'CY渡し';
+      if (els.purchaseTerm.value === 'WH') return `倉庫渡し ${fmt(resultJpyKg, 2)} 円/kg`;
+      if (els.purchaseTerm.value === 'YARD_WH') return `店頭（倉庫渡し） ${fmt(resultJpyKg, 2)} 円/kg`;
       return `店頭 ${fmt(resultJpyKg, 2)} 円/kg`;
     }
 
     function getCyBasePriceLabel(resultJpyTon) {
-      if (els.purchaseTerm.value !== 'YARD') return '';
+      if (els.purchaseTerm.value !== 'YARD' && els.purchaseTerm.value !== 'YARD_WH') return '';
       const domesticJpyTon = getDomesticJpyTon();
       const cyPriceJpyKg = round1((resultJpyTon + domesticJpyTon) / 1000);
       return `${fmt1(cyPriceJpyKg)} 円/kg ベース`;
@@ -1789,7 +1958,7 @@
           rows.push({ label: 'LC 手数料', value: `${fmt(n(els.lcFee.value), 2)} USD/ton` });
           netUsdTon -= n(els.lcFee.value);
         }
-        if (costs.includeMargin && term !== 'CY') {
+        if (costs.includeMargin && term !== 'CY' && term !== 'WH') {
           rows.push({ label: '当社口銭', value: `${fmt(n(els.ourMargin.value), 2)} USD/ton` });
           netUsdTon -= n(els.ourMargin.value);
         }
@@ -1804,7 +1973,7 @@
         let baseJpyTon = floor0(netUsdTon * fxRate);
         rows.push({ label: '円換算', value: `${fmt(netUsdTon, 2)} × ${fmt(fxRate, 2)} = ${fmt0(baseJpyTon)} 円/ton` });
 
-        if (costs.includeMargin && term === 'CY') {
+        if (costs.includeMargin && (term === 'CY' || term === 'WH')) {
           const marginJpyTon = n(els.ourMargin.value) * 1000;
           rows.push({ label: '当社口銭', value: `${fmt(n(els.ourMargin.value), 2)} 円/kg = ${fmt(marginJpyTon, 2)} 円/ton` });
           baseJpyTon -= marginJpyTon;
@@ -1830,8 +1999,9 @@
             baseJpyTon -= fixed.handling;
           }
         }
-        if (els.purchaseTerm.value === 'YARD') {
-          rows.push({ label: '国内輸送費', value: `${fmt(getDomesticJpyTon(), 2)} 円/ton` });
+        if (els.purchaseTerm.value === 'YARD' || els.purchaseTerm.value === 'YARD_WH' || els.purchaseTerm.value === 'WH') {
+          const domesticRows = getDomesticBreakdownRows();
+          domesticRows.forEach(row => rows.push(row));
           baseJpyTon -= getDomesticJpyTon();
         }
 
@@ -1845,7 +2015,7 @@
           purchaseCondition: getPurchaseConditionLabel(resultJpyKg),
           cyBasePrice: getCyBasePriceLabel(baseJpyTon),
           salePriceDisplay,
-          fxRateDisplay: term === 'CY' ? '' : fmt(fxRate, 2),
+          fxRateDisplay: (term === 'CY' || term === 'WH') ? '' : fmt(fxRate, 2),
           rows,
           lotTon,
           containerLoad,
@@ -1861,9 +2031,10 @@
       if (els.currencyType.value === 'USD') {
         rows.push({ label: '円換算', value: `${fmt(neededBaseTon, 2)} × ${fmt(fxRate, 2)} = ${fmt(neededJpyTon, 2)} 円/ton` });
       }
-      if (els.purchaseTerm.value === 'YARD') {
+      if (els.purchaseTerm.value === 'YARD' || els.purchaseTerm.value === 'YARD_WH' || els.purchaseTerm.value === 'WH') {
         const domestic = getDomesticJpyTon();
-        rows.push({ label: '国内輸送費', value: `${fmt(domestic, 2)} 円/ton` });
+        const domesticRows = getDomesticBreakdownRows();
+        domesticRows.forEach(row => rows.push(row));
         neededJpyTon += domestic;
       }
       if (costs.includeCustoms || costs.includeHandling) {
@@ -1889,13 +2060,13 @@
       }
 
       let resultMain = '';
-      let purchaseCondition = els.purchaseTerm.value === 'CY' ? 'CY渡し' : `店頭 ${fmt(n(els.buyPrice.value), 2)} 円/kg`;
+      let purchaseCondition = els.purchaseTerm.value === 'CY' ? 'CY渡し' : (els.purchaseTerm.value === 'WH' ? `倉庫渡し ${fmt(n(els.buyPrice.value), 2)} 円/kg` : (els.purchaseTerm.value === 'YARD_WH' ? `店頭（倉庫渡し） ${fmt(n(els.buyPrice.value), 2)} 円/kg` : `店頭 ${fmt(n(els.buyPrice.value), 2)} 円/kg`));
       let cyBasePrice = '';
 
       if (term === 'CIF' || term === 'CFR') {
         let neededUsdTon = fxRate > 0 ? neededJpyTon / fxRate : 0;
         rows.push({ label: 'ドル換算前', value: `${fmt(neededJpyTon, 2)} ÷ ${fmt(fxRate, 2)} = ${fmt(neededUsdTon, 2)} USD/ton` });
-        if (costs.includeMargin && term !== 'CY') {
+        if (costs.includeMargin && term !== 'CY' && term !== 'WH') {
           rows.push({ label: '当社口銭', value: `${fmt(n(els.ourMargin.value), 2)} USD/ton` });
           neededUsdTon += n(els.ourMargin.value);
         }
@@ -1917,7 +2088,7 @@
         resultMain = `${fmt(resultUsdTon, 2)} USD/ton`;
       } else {
         if (costs.includeMargin) {
-          if (term === 'CY') {
+          if (term === 'CY' || term === 'WH') {
             const marginJpyTon = n(els.ourMargin.value) * 1000;
             rows.push({ label: '当社口銭', value: `${fmt(n(els.ourMargin.value), 2)} 円/kg = ${fmt(marginJpyTon, 2)} 円/ton` });
             neededJpyTon += marginJpyTon;
@@ -1932,7 +2103,7 @@
         resultMain = `${fmt(resultJpyKg, 2)} 円/kg`;
       }
 
-      if (els.purchaseTerm.value === 'YARD') {
+      if (els.purchaseTerm.value === 'YARD' || els.purchaseTerm.value === 'YARD_WH' || els.purchaseTerm.value === 'WH') {
         const domesticJpyTon = getDomesticJpyTon();
         cyBasePrice = `${fmt1(round1(n(els.buyPrice.value) + (domesticJpyTon / 1000)))} 円/kg ベース`;
       }
@@ -1944,7 +2115,7 @@
         purchaseCondition,
         cyBasePrice,
         salePriceDisplay: `販売条件：${getSalesConditionLabel()} 逆算`,
-        fxRateDisplay: term === 'CY' ? '' : fmt(fxRate, 2),
+        fxRateDisplay: (term === 'CY' || term === 'WH') ? '' : fmt(fxRate, 2),
         rows,
         lotTon,
         containerLoad,
@@ -2044,7 +2215,7 @@
       ${report.cyBasePrice ? `<div>CY 価格 ${escapeHtml(report.cyBasePrice)}</div>` : ''}
       <div>${escapeHtml(report.salePriceDisplay)}${report.fxRateDisplay ? `　為替：${escapeHtml(report.fxRateDisplay)}` : ''}</div>
     </div>
-    <div class="section">■ コスト計算根拠</div>
+    <div class="section">■ 計算明細</div>
     <div class="small" style="margin-bottom:8px;">船積みロット: ${escapeHtml(fmt(report.lotTon, 0))} ton　積載: ${escapeHtml(fmt(report.containerLoad, 0))} ton</div>
     <table>
       <tbody>${rowsHtml}</tbody>
@@ -2065,7 +2236,7 @@
 
   <script>
     (function () {
-      const CURRENT_VERSION = String(window.__APP_VERSION__ || '20260410-6');
+      const CURRENT_VERSION = String(window.__APP_VERSION__ || '20260410-7');
       const POPUP_HIDE_KEY = 'koshi-export-update-popup-hide-for-' + CURRENT_VERSION;
 
       function getUpdateEls() {
@@ -2207,7 +2378,7 @@
           netUsdTon -= n(els.lcFee.value);
           steps.push(`LC手数料 = ${fmt(n(els.lcFee.value), 2)} USD/ton`);
         }
-        if (costs.includeMargin && term !== 'CY') {
+        if (costs.includeMargin && term !== 'CY' && term !== 'WH') {
           netUsdTon -= n(els.ourMargin.value);
           steps.push(`当社口銭 = ${fmt(n(els.ourMargin.value), 2)} USD/ton`);
         }
@@ -2220,7 +2391,7 @@
         steps.push(`ドル建て残額 = ${fmt(netUsdTon, 2)} USD/ton`);
         baseJpyTon = floor0(netUsdTon * fxRate);
         steps.push(`円換算 = ${fmt(netUsdTon, 2)} × ${fmt(fxRate, 4)} = ${fmt0(baseJpyTon)} 円/ton`);
-        if (costs.includeMargin && term === 'CY') {
+        if (costs.includeMargin && (term === 'CY' || term === 'WH')) {
           const marginJpyTon = n(els.ourMargin.value) * 1000;
           baseJpyTon -= marginJpyTon;
           steps.push(`当社口銭 = ${fmt(n(els.ourMargin.value), 2)} 円/kg = ${fmt(marginJpyTon, 2)} 円/ton`);
@@ -2229,7 +2400,7 @@
         baseJpyTon = salePriceTon;
         steps.push(`販売単価 = ${fmt(baseJpyTon, 2)} 円/ton換算`);
         if (costs.includeMargin) {
-          if (term === 'CY') {
+          if (term === 'CY' || term === 'WH') {
             const marginJpyTon = n(els.ourMargin.value) * 1000;
             baseJpyTon -= marginJpyTon;
             steps.push(`当社口銭 = ${fmt(n(els.ourMargin.value), 2)} 円/kg = ${fmt(marginJpyTon, 2)} 円/ton`);
@@ -2249,15 +2420,23 @@
         if (costs.includeCustoms) deductions.push({ name: '通関費', value: fixed.customs });
         if (costs.includeHandling) deductions.push({ name: '取扱費', value: fixed.handling });
       }
-      if (els.purchaseTerm.value === 'YARD') deductions.push({ name: '国内輸送費', value: getDomesticJpyTon() });
-
       let resultJpyTon = baseJpyTon;
+
+      if (els.purchaseTerm.value === 'YARD' || els.purchaseTerm.value === 'YARD_WH' || els.purchaseTerm.value === 'WH') {
+        const domesticLines = getDomesticBreakdownLines();
+        const domesticTotal = getDomesticJpyTon();
+        domesticLines.forEach(line => steps.push(line));
+        resultJpyTon -= domesticTotal;
+      }
+
       deductions.forEach(item => {
         resultJpyTon -= item.value;
         steps.push(`${item.name} = ${fmt(item.value, 2)} 円/ton`);
       });
 
       const resultJpyKg = floor2(resultJpyTon / 1000);
+      steps.push(``);
+      steps.push(`【最終単価】`);
       steps.push(`仕入可能単価 = ${fmt(resultJpyTon, 2)} 円/ton ÷ 1000 = ${fmt(resultJpyKg, 2)} 円/kg`);
 
       els.resultMain.textContent = `${fmt(resultJpyKg, 2)} 円/kg`;
@@ -2265,6 +2444,15 @@
         const domesticJpyTon = getDomesticJpyTon();
         const cyPriceJpyKg = round1((resultJpyTon + domesticJpyTon) / 1000);
         els.resultSub.textContent = `仕入条件：店頭　CY価格 ${fmt1(cyPriceJpyKg)}円/kgベース`;
+      } else if (els.purchaseTerm.value === 'YARD_WH') {
+        const domesticJpyTon = getDomesticJpyTon();
+        const baseLabel = els.salesTerm.value === 'WH' ? '倉庫価格' : 'CY価格';
+        const priceJpyKg = round1((resultJpyTon + domesticJpyTon) / 1000);
+        els.resultSub.textContent = `仕入条件：店頭（倉庫渡し）　${baseLabel} ${fmt1(priceJpyKg)}円/kgベース`;
+      } else if (els.purchaseTerm.value === 'WH') {
+        const domesticJpyTon = getDomesticJpyTon();
+        const whPriceJpyKg = round1((resultJpyTon + domesticJpyTon) / 1000);
+        els.resultSub.textContent = `仕入条件：倉庫渡し　倉庫価格 ${fmt1(whPriceJpyKg)}円/kgベース`;
       } else {
         els.resultSub.textContent = `仕入条件：CY渡し`;
       }
@@ -2292,10 +2480,11 @@
         steps.push(`円換算 = ${fmt(neededBaseTon, 2)} × ${fmt(fxRate, 4)} = ${fmt(neededJpyTon, 2)} 円/ton`);
       }
 
-      if (els.purchaseTerm.value === 'YARD') {
+      if (els.purchaseTerm.value === 'YARD' || els.purchaseTerm.value === 'YARD_WH' || els.purchaseTerm.value === 'WH') {
         const domestic = getDomesticJpyTon();
         neededJpyTon += domestic;
-        steps.push(`国内輸送費 = ${fmt(domestic, 2)} 円/ton`);
+        const domesticLines = getDomesticBreakdownLines();
+        domesticLines.forEach(line => steps.push(line));
       }
       if (costs.includeCustoms || costs.includeHandling) {
         const fixed = getFixedJpyTon();
@@ -2340,17 +2529,20 @@
           steps.push(`販売可能単価 = ${fmt(neededUsdTon, 2)} USD/ton`);
         }
         const resultUsdTon = floor2(neededUsdTon);
+        steps.push(``);
+        steps.push(`【最終単価】`);
+        steps.push(`販売可能単価 = ${fmt(resultUsdTon, 2)} USD/ton`);
         els.resultMain.textContent = `${fmt(resultUsdTon, 2)} USD/ton`;
-        if (els.purchaseTerm.value === 'YARD') {
+        if (els.purchaseTerm.value === 'YARD' || els.purchaseTerm.value === 'YARD_WH' || els.purchaseTerm.value === 'WH') {
           const domesticJpyTon = getDomesticJpyTon();
           const cyPriceJpyKg = round1((n(els.buyPrice.value) + (domesticJpyTon / 1000)));
-          els.resultSub.textContent = `販売条件：${els.salesTerm.value}　CY価格 ${fmt1(cyPriceJpyKg)}円/kgベース`;
+          els.resultSub.textContent = `販売条件：${getSalesConditionLabel()}　${(els.purchaseTerm.value === 'WH' || (els.purchaseTerm.value === 'YARD_WH' && els.salesTerm.value === 'WH')) ? '倉庫価格' : 'CY価格'} ${fmt1(cyPriceJpyKg)}円/kgベース`;
         } else {
-          els.resultSub.textContent = `販売条件：${els.salesTerm.value}`;
+          els.resultSub.textContent = `販売条件：${getSalesConditionLabel()}`;
         }
       } else {
         if (costs.includeMargin) {
-          if (term === 'CY') {
+          if (term === 'CY' || term === 'WH') {
             const marginJpyTon = n(els.ourMargin.value) * 1000;
             neededJpyTon += marginJpyTon;
             steps.push(`当社口銭 = ${fmt(n(els.ourMargin.value), 2)} 円/kg = ${fmt(marginJpyTon, 2)} 円/ton`);
@@ -2361,13 +2553,16 @@
           }
         }
         const resultJpyKg = floor2(neededJpyTon / 1000);
+        steps.push(``);
+        steps.push(`【最終単価】`);
+        steps.push(`販売可能単価 = ${fmt(neededJpyTon, 2)} 円/ton ÷ 1000 = ${fmt(resultJpyKg, 2)} 円/kg`);
         els.resultMain.textContent = `${fmt(resultJpyKg, 2)} 円/kg`;
-        if (els.purchaseTerm.value === 'YARD') {
+        if (els.purchaseTerm.value === 'YARD' || els.purchaseTerm.value === 'YARD_WH' || els.purchaseTerm.value === 'WH') {
           const domesticJpyTon = getDomesticJpyTon();
           const cyPriceJpyKg = round1((n(els.buyPrice.value) + (domesticJpyTon / 1000)));
-          els.resultSub.textContent = `販売条件：${els.salesTerm.value}　CY価格 ${fmt1(cyPriceJpyKg)}円/kgベース`;
+          els.resultSub.textContent = `販売条件：${getSalesConditionLabel()}　${(els.purchaseTerm.value === 'WH' || (els.purchaseTerm.value === 'YARD_WH' && els.salesTerm.value === 'WH')) ? '倉庫価格' : 'CY価格'} ${fmt1(cyPriceJpyKg)}円/kgベース`;
         } else {
-          els.resultSub.textContent = `販売条件：${els.salesTerm.value}`;
+          els.resultSub.textContent = `販売条件：${getSalesConditionLabel()}`;
         }
       }
 
@@ -2407,11 +2602,19 @@
       refreshUI();
     });
     els.unitType.addEventListener('change', refreshUI);
-    els.salesTerm.addEventListener('change', refreshUI);
-    els.purchaseTerm.addEventListener('change', refreshUI);
-    els.domesticTransportType.addEventListener('change', () => {
-      refreshTransportDefaults(true);
+    els.salesTerm.addEventListener('change', () => {
+      state.transportTouched = false;
       refreshUI();
+    });
+    els.purchaseTerm.addEventListener('change', () => {
+      state.transportTouched = false;
+      refreshUI();
+    });
+    els.domesticTransportType.addEventListener('change', () => {
+      state.transportTouched = true;
+      refreshTransportDefaults(true);
+      updateCalcButtonState();
+      saveData(false);
     });
     function adjustFxRate(delta) {
       const current = String(els.fxRate.value).trim() === '' ? 0 : n(els.fxRate.value);
@@ -2454,6 +2657,8 @@ els.fxRate.addEventListener('blur', () => {
       els.handlingFee,
       els.insuranceRate,
       els.domesticTransportCost,
+      els.storageFee,
+      els.shortDrayCost,
       els.transportLoad,
       els.lotQty
     ].forEach(el => {
@@ -2516,7 +2721,7 @@ els.fxRate.addEventListener('blur', () => {
 
   <script>
     (function () {
-      const CURRENT_VERSION = String(window.__APP_VERSION__ || '20260410-6');
+      const CURRENT_VERSION = String(window.__APP_VERSION__ || '20260410-7');
       const POPUP_HIDE_KEY = 'koshi-export-update-popup-hide-for-' + CURRENT_VERSION;
 
       function getUpdateEls() {
