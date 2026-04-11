@@ -812,7 +812,7 @@ updateSalePricePlaceholder();
           <label for="purchaseTerm">仕入条件</label>
           <select id="purchaseTerm">
             <option value="YARD">店頭</option>
-            <option value="YARD_WH">店頭（倉庫渡し）</option>
+            <option value="YARD_WH">店頭（大型引取）</option>
             <option value="WH">倉庫渡し</option>
             <option value="CY">CY渡し</option>
           </select>
@@ -2104,7 +2104,7 @@ function refreshUI() {
     function getPurchaseConditionLabel(resultJpyKg) {
       if (els.purchaseTerm.value === 'CY') return 'CY渡し';
       if (els.purchaseTerm.value === 'WH') return `倉庫渡し ${fmt(resultJpyKg, 2)} 円/kg`;
-      if (els.purchaseTerm.value === 'YARD_WH') return `店頭（倉庫渡し） ${fmt(resultJpyKg, 2)} 円/kg`;
+      if (els.purchaseTerm.value === 'YARD_WH') return `店頭（大型引取） ${fmt(resultJpyKg, 2)} 円/kg`;
       return `店頭 ${fmt(resultJpyKg, 2)} 円/kg`;
     }
 
@@ -2243,7 +2243,7 @@ function refreshUI() {
       }
 
       let resultMain = '';
-      let purchaseCondition = els.purchaseTerm.value === 'CY' ? 'CY渡し' : (els.purchaseTerm.value === 'WH' ? `倉庫渡し ${fmt(n(els.buyPrice.value), 2)} 円/kg` : (els.purchaseTerm.value === 'YARD_WH' ? `店頭（倉庫渡し） ${fmt(n(els.buyPrice.value), 2)} 円/kg` : `店頭 ${fmt(n(els.buyPrice.value), 2)} 円/kg`));
+      let purchaseCondition = els.purchaseTerm.value === 'CY' ? 'CY渡し' : (els.purchaseTerm.value === 'WH' ? `倉庫渡し ${fmt(n(els.buyPrice.value), 2)} 円/kg` : (els.purchaseTerm.value === 'YARD_WH' ? `店頭（大型引取） ${fmt(n(els.buyPrice.value), 2)} 円/kg` : `店頭 ${fmt(n(els.buyPrice.value), 2)} 円/kg`));
       let cyBasePrice = '';
 
       if (term === 'CIF' || term === 'CFR') {
@@ -2644,7 +2644,7 @@ function refreshUI() {
         const domesticJpyTon = getDomesticJpyTon();
         const baseLabel = els.salesTerm.value === 'WH' ? '倉庫価格' : 'CY価格';
         const priceJpyKg = round1((resultJpyTon + domesticJpyTon) / 1000);
-        els.resultSub.textContent = `仕入条件：店頭（倉庫渡し）　${baseLabel} ${fmt1(priceJpyKg)}円/kgベース`;
+        els.resultSub.textContent = `仕入条件：店頭（大型引取）　${baseLabel} ${fmt1(priceJpyKg)}円/kgベース`;
       } else if (els.purchaseTerm.value === 'WH') {
         const domesticJpyTon = getDomesticJpyTon();
         const whPriceJpyKg = round1((resultJpyTon + domesticJpyTon) / 1000);
