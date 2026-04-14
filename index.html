@@ -1,25 +1,25 @@
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="theme-color" content="#2233df" />
-    <meta name="apple-mobile-web-app-title" content="コスト計算" />
-  <meta name="application-name" content="輸出コスト計算" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=20260410-6" />
-  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png?v=20260410-6" />
-  <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16.png?v=20260410-6" />
-  <link rel="icon" href="./favicon.ico?v=20260410-6" />
-  <link rel="manifest" href="./site.webmanifest?v=20260410-6" />
-  <title>輸出コスト計算</title>
-
-  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="default" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="#2233df" name="theme-color"/>
+<meta content="コスト計算" name="apple-mobile-web-app-title"/>
+<meta content="輸出コスト計算" name="application-name"/>
+<meta content="yes" name="mobile-web-app-capable"/>
+<link href="./apple-touch-icon.png?v=20260410-6" rel="apple-touch-icon" sizes="180x180"/>
+<link href="./favicon-32.png?v=20260410-6" rel="icon" sizes="32x32" type="image/png"/>
+<link href="./favicon-16.png?v=20260410-6" rel="icon" sizes="16x16" type="image/png"/>
+<link href="./favicon.ico?v=20260410-6" rel="icon"/>
+<link href="./site.webmanifest?v=20260410-6" rel="manifest"/>
+<title>輸出コスト計算</title>
+<meta content="no-store, no-cache, must-revalidate, max-age=0" http-equiv="Cache-Control"/>
+<meta content="no-cache" http-equiv="Pragma"/>
+<meta content="0" http-equiv="Expires"/>
+<script>
     (function() {
       try {
         if ('serviceWorker' in navigator) {
@@ -66,8 +66,7 @@ function initSalePricePlaceholder() {
 
 
 </script>
-
-  <style>
+<style>
     :root {
       --bg: #f3f7fb;
       --bg-2: #eef4fb;
@@ -706,6 +705,52 @@ function initSalePricePlaceholder() {
       border: 1px solid rgba(255,255,255,0.5);
     }
 
+    .header-action-row {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .header-pill-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      border: none;
+      font-size: .76rem;
+      flex-wrap: wrap;
+    }
+    .header-pill-label {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      color: rgba(255,255,255,.96);
+      font-weight: 700;
+      padding: 0 2px;
+    }
+    .header-pill-btn {
+      min-height: 30px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.24);
+      background: rgba(255,255,255,.14);
+      color: #fff;
+      font-size: .76rem;
+      font-weight: 800;
+      box-shadow: none;
+    }
+    .header-pill-btn:hover {
+      transform: none;
+      box-shadow: none;
+      background: rgba(255,255,255,.2);
+    }
+    .saved-data-select {
+      width: 100%;
+      min-height: 46px;
+    }
+
     #exportCostCard label {
       font-size: 0.97rem;
     }
@@ -717,313 +762,343 @@ function initSalePricePlaceholder() {
       font-size: 1.12rem;
     }
 
+
+    .save-toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(20px + env(safe-area-inset-bottom));
+      transform: translateX(-50%) translateY(18px);
+      min-width: min(88vw, 320px);
+      max-width: 88vw;
+      padding: 12px 18px;
+      border-radius: 14px;
+      background: rgba(23, 50, 77, 0.96);
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.92rem;
+      text-align: center;
+      box-shadow: 0 14px 34px rgba(0,0,0,0.22);
+      z-index: 99999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .28s ease, transform .32s ease;
+      backdrop-filter: blur(8px);
+    }
+    .save-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
 </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 </head>
 <body>
-  <div class="app">
-    <div class="app-header">
-      <h1>輸出コスト計算</h1>
-      <div class="subtitle">山發日本株式会社 社内アプリ</div>
-      <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-        <span style="display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.18); font-size:.76rem;">営業ツールUI 完全版</span>
-        <span style="display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.16); font-size:.76rem;">localStorage保存対応</span>
-      </div>
-    </div>
+<div class="app">
+<div class="app-header">
+<h1>輸出コスト計算</h1>
+<div class="subtitle">山發日本株式会社 社内アプリ</div>
+<div class="header-action-row">
+<div class="header-pill-group">
 
-    <div class="card">
-      <div class="section-title">1. 計算モード</div>
-      <div class="inline">
-        <div class="segmented" style="flex:1;">
-          <button id="modeSellBtn" class="active" type="button">販売単価から計算</button>
-          <button id="modeBuyBtn" type="button">仕入単価から計算</button>
-        </div>
-        <button id="resetBtnTop" class="ghost" type="button">リセット</button>
-      </div>
-      <div class="footer-note">入力内容はこの端末内に自動保存されます。為替取得のみインターネット接続が必要です。</div>
-      <div class="footer-note" style="margin-top:10px;">アプリ版: 自動更新版</div>
-    </div>
+<button class="header-pill-btn" id="resetBtnTop" type="button">リセット</button>
+</div>
+<div class="header-pill-group">
 
-    <div class="card">
-      <div class="section-title">2. 基本条件</div>
-      <div class="row" style="margin-top:0; margin-bottom:12px;">
-        <div class="field" style="max-width:260px;">
-          <label for="itemCategory">品目</label>
-          <select id="itemCategory">
-            <option value="古紙" selected>古紙</option>
-            <option value="B級品">B級品</option>
-            <option value="古着">古着</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="row three" id="basicTopRow">
-        <div class="field" id="salePriceField">
-          <label for="salePrice" id="salePriceLabel">販売単価</label>
-          <input id="salePrice" type="number" step="1" placeholder="例）160" />
-        </div>
-        <div class="field hidden" id="buyPriceField">
-          <label for="buyPrice" id="buyPriceLabel">仕入単価</label>
-          <input id="buyPrice" type="number" step="0.1" placeholder="例: 19.9" />
-        </div>
-        <div class="field">
-          <label for="currencyType" id="currencyTypeLabel">販売単価 通貨</label>
-          <select id="currencyType">
-            <option value="USD">ドル</option>
-            <option value="JPY">円</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="unitType" id="unitTypeLabel">販売単価 単位</label>
-          <select id="unitType">
-            <option value="ton">/ton</option>
-            <option value="kg">/kg</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="row three" id="termRow">
-        <div class="field" id="salesTermField">
-          <label for="salesTerm">販売条件</label>
-          <select id="salesTerm">
-            <option value="CIF">CIF</option>
-            <option value="CFR">CFR</option>
-            <option value="FOB">FOB</option>
-            <option value="CY">CY渡し</option>
-            <option value="WH">倉庫渡し</option>
-          </select>
-        </div>
-        <div class="field" id="lotQtyField">
-          <label for="lotQty">船積みロット(ton)</label>
-          <input id="lotQty" type="number" step="20" value="200" placeholder="例: 200" />
-          
-        </div>
-        <div class="field" id="purchaseTermField">
-          <label for="purchaseTerm">仕入条件</label>
-          <select id="purchaseTerm">
-            <option value="YARD">店頭</option>
-            <option value="YARD_WH">店頭（大型引取）</option>
-            <option value="WH">倉庫渡し</option>
-            <option value="CY">CY渡し</option>
-          </select>
-          <div class="help hidden" id="purchaseTermHelp"></div>
-        </div>
-      </div>
-
-      <div class="row two">
-        <div class="field" id="fxRateField">
-          <label for="fxRate">為替仲値 (USD/JPY)</label>
-          <div class="inline fx-inline">
-            <div class="spin-input-wrap">
-              <button id="fxDownBtn" class="secondary spin-btn" type="button" aria-label="為替を0.5下げる">－</button>
-              <input id="fxRate" type="number" step="0.5" inputmode="decimal" placeholder="例: 158.41" />
-              <button id="fxUpBtn" class="secondary spin-btn" type="button" aria-label="為替を0.5上げる">＋</button>
-            </div>
-            <button id="fetchFxBtn" type="button">為替相場を取得</button>
-          </div>
-          <div id="fxStatus" class="help" style="color:red;"></div>
-        </div>
-        <div class="field">
-          <label for="containerLoad">コンテナ積載量 (t)</label>
-          <input id="containerLoad" type="number" step="0.5" value="22" />
-          
-        </div>
-      </div>
-    </div>
-
-    <div class="card" id="exportCostCard">
-      <div class="section-title">3. 輸出コスト入力</div>
-      <div class="row three">
-        <div class="field" id="overseasComField">
-          <label for="overseasCom">海外COM (USD/ton)</label>
-          <input id="overseasCom" type="number" step="0.25" value="0.5" />
-          
-        </div>
-        <div class="field" id="lcFeeField">
-          <label for="lcFee">LC手数料 (USD/ton)</label>
-          <select id="lcFee">
-            <option value="1.5">1.5</option>
-            <option value="1.0">1.0</option>
-            <option value="0.5">0.5</option>
-            <option value="0">0</option>
-          </select>
-        </div>
-        <div class="field" id="ourMarginField">
-          <label for="ourMargin" id="ourMarginLabel">当社口銭(USD/ton)</label>
-          <input id="ourMargin" type="number" step="0.5" value="3" />
-          
-        </div>
-      </div>
-
-      <div class="row three">
-        <div class="field" id="freightCurrencyField">
-          <label for="freightCurrency">海上運賃 通貨</label>
-          <select id="freightCurrency">
-            <option value="USD">ドル</option>
-            <option value="JPY">円</option>
-          </select>
-        </div>
-        <div class="field" id="seaFreightField">
-          <label for="seaFreight">海上運賃（40F＊EBS等込み)</label>
-          <input id="seaFreight" type="number" step="10" value="" placeholder="例）400" />
-          
-        </div>
-        <div class="field" id="doFeeField">
-          <label for="doFee" id="doFeeLabel">Do Fee (円/Lot)</label>
-          <input id="doFee" type="number" step="1" value="7980" />
-        </div>
-      </div>
-
-      <div class="row three">
-        <div class="field" id="customsFeeField">
-          <label for="customsFee">通関費 (円/件)</label>
-          <input id="customsFee" type="number" step="1" value="5900" />
-        </div>
-        <div class="field" id="handlingFeeField">
-          <label for="handlingFee">取扱費 (円/件)</label>
-          <input id="handlingFee" type="number" step="1000" value="15000" />
-        </div>
-        <div class="field hidden" id="insuranceField">
-          <label for="insuranceRate">海上保険率 (%)</label>
-          <input id="insuranceRate" type="number" step="0.01" value="0.11" />
-        </div>
-      </div>
-    </div>
-
-    
+<button class="header-pill-btn" id="saveBtn" type="button">入力内容保存</button>
+<button class="header-pill-btn" id="loadDataBtn" type="button">データ呼出</button>
+</div>
+</div>
+</div>
+<div class="card">
+<div class="section-title">1. 計算モード</div>
+<div class="inline">
+<div class="segmented" style="flex:1;">
+<button class="active" id="modeSellBtn" type="button">販売単価から計算</button>
+<button id="modeBuyBtn" type="button">仕入単価から計算</button>
+</div>
+</div>
+<div class="footer-note">入力内容はこの端末内に自動保存されます。為替取得のみインターネット接続が必要です。</div>
+<div class="footer-note" style="margin-top:10px;">アプリ版: 自動更新版</div>
+</div>
+<div class="card">
+<div class="section-title">2. 基本条件</div>
+<div class="row" style="margin-top:0; margin-bottom:12px;">
+<div class="field" style="max-width:260px;">
+<label for="itemCategory">品目</label>
+<select id="itemCategory">
+<option selected="" value="古紙">古紙</option>
+<option value="B級品">B級品</option>
+<option value="古着">古着</option>
+</select>
+</div>
+</div>
+<div class="row three" id="basicTopRow">
+<div class="field" id="salePriceField">
+<label for="salePrice" id="salePriceLabel">販売単価</label>
+<input id="salePrice" placeholder="例）160" step="1" type="number"/>
+</div>
+<div class="field hidden" id="buyPriceField">
+<label for="buyPrice" id="buyPriceLabel">仕入単価</label>
+<input id="buyPrice" placeholder="例: 19.9" step="0.1" type="number"/>
+</div>
+<div class="field">
+<label for="currencyType" id="currencyTypeLabel">販売単価 通貨</label>
+<select id="currencyType">
+<option value="USD">ドル</option>
+<option value="JPY">円</option>
+</select>
+</div>
+<div class="field">
+<label for="unitType" id="unitTypeLabel">販売単価 単位</label>
+<select id="unitType">
+<option value="ton">/ton</option>
+<option value="kg">/kg</option>
+</select>
+</div>
+</div>
+<div class="row three" id="termRow">
+<div class="field" id="salesTermField">
+<label for="salesTerm">販売条件</label>
+<select id="salesTerm">
+<option value="CIF">CIF</option>
+<option value="CFR">CFR</option>
+<option value="FOB">FOB</option>
+<option value="CY">CY渡し</option>
+<option value="WH">倉庫渡し</option>
+</select>
+</div>
+<div class="field" id="lotQtyField">
+<label for="lotQty">船積みロット(ton)</label>
+<input id="lotQty" placeholder="例: 200" step="20" type="number" value="200"/>
+</div>
+<div class="field" id="purchaseTermField">
+<label for="purchaseTerm">仕入条件</label>
+<select id="purchaseTerm">
+<option value="YARD">店頭</option>
+<option value="YARD_WH">店頭（大型引取）</option>
+<option value="WH">倉庫渡し</option>
+<option value="CY">CY渡し</option>
+</select>
+<div class="help hidden" id="purchaseTermHelp"></div>
+</div>
+</div>
+<div class="row two">
+<div class="field" id="fxRateField">
+<label for="fxRate">為替仲値 (USD/JPY)</label>
+<div class="inline fx-inline">
+<div class="spin-input-wrap">
+<button aria-label="為替を0.5下げる" class="secondary spin-btn" id="fxDownBtn" type="button">－</button>
+<input id="fxRate" inputmode="decimal" placeholder="例: 158.41" step="0.5" type="number"/>
+<button aria-label="為替を0.5上げる" class="secondary spin-btn" id="fxUpBtn" type="button">＋</button>
+</div>
+<button id="fetchFxBtn" type="button">為替相場を取得</button>
+</div>
+<div class="help" id="fxStatus" style="color:red;"></div>
+</div>
+<div class="field">
+<label for="containerLoad">コンテナ積載量 (t)</label>
+<input id="containerLoad" step="0.5" type="number" value="22"/>
+</div>
+</div>
+</div>
+<div class="card" id="exportCostCard">
+<div class="section-title">3. 輸出コスト入力</div>
+<div class="row three">
+<div class="field" id="overseasComField">
+<label for="overseasCom">海外COM (USD/ton)</label>
+<input id="overseasCom" step="0.25" type="number" value="0.5"/>
+</div>
+<div class="field" id="lcFeeField">
+<label for="lcFee">LC手数料 (USD/ton)</label>
+<select id="lcFee">
+<option value="1.5">1.5</option>
+<option value="1.0">1.0</option>
+<option value="0.5">0.5</option>
+<option value="0">0</option>
+</select>
+</div>
+<div class="field" id="ourMarginField">
+<label for="ourMargin" id="ourMarginLabel">当社口銭(USD/ton)</label>
+<input id="ourMargin" step="0.5" type="number" value="3"/>
+</div>
+</div>
+<div class="row three">
+<div class="field" id="freightCurrencyField">
+<label for="freightCurrency">海上運賃 通貨</label>
+<select id="freightCurrency">
+<option value="USD">ドル</option>
+<option value="JPY">円</option>
+</select>
+</div>
+<div class="field" id="seaFreightField">
+<label for="seaFreight">海上運賃（40F＊EBS等込み)</label>
+<input id="seaFreight" placeholder="例）400" step="10" type="number" value=""/>
+</div>
+<div class="field" id="doFeeField">
+<label for="doFee" id="doFeeLabel">Do Fee (円/Lot)</label>
+<input id="doFee" step="1" type="number" value="7980"/>
+</div>
+</div>
+<div class="row three">
+<div class="field" id="customsFeeField">
+<label for="customsFee">通関費 (円/件)</label>
+<input id="customsFee" step="1" type="number" value="5900"/>
+</div>
+<div class="field" id="handlingFeeField">
+<label for="handlingFee">取扱費 (円/件)</label>
+<input id="handlingFee" step="1000" type="number" value="15000"/>
+</div>
+<div class="field hidden" id="insuranceField">
+<label for="insuranceRate">海上保険率 (%)</label>
+<input id="insuranceRate" step="0.01" type="number" value="0.11"/>
+</div>
+</div>
+</div>
 <div class="card" id="domesticTransportCard">
-      <div class="section-title">4. 国内輸送費</div>
-
-      <div class="row two">
-        <div class="field">
-          <label for="supplierSelect">仕入先</label>
-          <select id="supplierSelect">
-            <option value="">選択してください</option>
-          </select>
-          <div class="help">仕入先を選ぶと、登録済みの輸送費が自動入力されます。運送費の登録はマスタ登録から行ってください。</div>
-        </div>
-        <div class="field" id="domesticTransportTypeField">
-          <label for="domesticTransportType" id="domesticTransportTypeLabel">国内輸送</label>
-          <select id="domesticTransportType">
-            <option value="DRAY">ドレー</option>
-            <option value="SHORT">ショートドレー</option>
-            <option value="TRUCK">大型</option>
-            <option value="4T">4t車</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="row two">
-        <div class="field">
-          <label for="transportLoad">積載量 (t)</label>
-          <input id="transportLoad" type="number" step="0.5" value="22" />
-        </div>
-        <div class="field">
-          <label for="domesticTransportCost" id="domesticTransportCostLabel">国内輸送費（車単価）</label>
-          <input id="domesticTransportCost" type="number" step="1000" value="" placeholder="例）35000" />
-          <input id="transportUnitPreview" type="hidden" value="" />
-        </div>
-      </div>
-
-      <div class="row two hidden" id="storageShortRow">
-        <div class="field" id="storageFeeField">
-          <label for="storageFee">入出庫・保管（円/ton)</label>
-          <input id="storageFee" type="number" step="100" value="" placeholder="例）2200" />
-        </div>
-        <div class="field" id="shortDrayCostField">
-          <label for="shortDrayCost">ショートドレー（車単位）</label>
-          <input id="shortDrayCost" type="number" step="1000" value="" placeholder="例）25000" />
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="field">
-          <button id="saveSupplierTransportBtn" class="ghost" type="button">現在の単価をこの仕入先に上書き</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">5. 計算</div>
-      <div class="inline" style="margin-bottom:12px;">
-        <button id="calcBtn" type="button">計算する</button>
-        <button id="printBtn" class="secondary" type="button">印刷</button>
-        <button id="excelExportBtn" class="secondary" type="button">Excel出力</button>
-      </div>
-      <div id="warningBox" class="warning hidden"></div>
-      <div id="resultArea" class="result-box hidden">
-        <div class="result-main" id="resultMain">-</div>
-        <div class="help" id="resultSub"></div>
-      </div>
-      <div style="height:10px"></div>
-      <div class="steps" id="stepsArea">ここに計算過程が表示されます。</div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">6. マスタ編集</div>
-      <div class="help" style="margin-bottom:8px;">
+<div class="section-title">4. 国内輸送費</div>
+<div class="row two">
+<div class="field">
+<label for="supplierSelect">仕入先</label>
+<select id="supplierSelect">
+<option value="">選択してください</option>
+</select>
+<div class="help">仕入先を選ぶと、登録済みの輸送費が自動入力されます。運送費の登録はマスタ登録から行ってください。</div>
+</div>
+<div class="field" id="domesticTransportTypeField">
+<label for="domesticTransportType" id="domesticTransportTypeLabel">国内輸送</label>
+<select id="domesticTransportType">
+<option value="DRAY">ドレー</option>
+<option value="SHORT">ショートドレー</option>
+<option value="TRUCK">大型</option>
+<option value="4T">4t車</option>
+</select>
+</div>
+</div>
+<div class="row two">
+<div class="field">
+<label for="transportLoad">積載量 (t)</label>
+<input id="transportLoad" step="0.5" type="number" value="22"/>
+</div>
+<div class="field">
+<label for="domesticTransportCost" id="domesticTransportCostLabel">国内輸送費（車単価）</label>
+<input id="domesticTransportCost" placeholder="例）35000" step="1000" type="number" value=""/>
+<input id="transportUnitPreview" type="hidden" value=""/>
+</div>
+</div>
+<div class="row two hidden" id="storageShortRow">
+<div class="field" id="storageFeeField">
+<label for="storageFee">入出庫・保管（円/ton)</label>
+<input id="storageFee" placeholder="例）2200" step="100" type="number" value=""/>
+</div>
+<div class="field" id="shortDrayCostField">
+<label for="shortDrayCost">ショートドレー（車単位）</label>
+<input id="shortDrayCost" placeholder="例）25000" step="1000" type="number" value=""/>
+</div>
+</div>
+<div class="row">
+<div class="field">
+<button class="ghost" id="saveSupplierTransportBtn" type="button">現在の単価をこの仕入先に上書き</button>
+</div>
+</div>
+</div>
+<div class="card">
+<div class="section-title">5. 計算</div>
+<div class="inline" style="margin-bottom:12px;">
+<button id="calcBtn" type="button">計算する</button>
+<button class="secondary" id="printBtn" type="button">印刷</button>
+<button class="secondary" id="excelExportBtn" type="button">Excel出力</button>
+</div>
+<div class="warning hidden" id="warningBox"></div>
+<div class="result-box hidden" id="resultArea">
+<div class="result-main" id="resultMain">-</div>
+<div class="help" id="resultSub"></div>
+</div>
+<div style="height:10px"></div>
+<div class="steps" id="stepsArea">ここに計算過程が表示されます。</div>
+</div>
+<div class="card">
+<div class="section-title">6. マスタ編集</div>
+<div class="help" style="margin-bottom:8px;">
   	保存内容はこの端末の localStorage に保存されます。
       </div>
-      <div class="inline">
-        <button id="openSupplierMasterBtn" type="button">
+<div class="inline">
+<button id="openSupplierMasterBtn" type="button">
   	ドレー単価マスタ編集
 	</button>
-      </div>
-    </div>
-
-    <div class="modal-overlay hidden" id="supplierMasterModal">
-      <div class="modal-panel">
-        <div class="modal-scroll">
-        <div class="supplier-master-card" id="supplierMasterCard">
-          <div class="supplier-master-head">
-            <div>
-              <div class="section-title" style="margin-bottom:4px;">ドレー単価マスタ編集</div>
-              <div class="help">仕入先名、国内輸送区分、国内輸送費（車単価）、積載量を編集できます。</div>
-            </div>
-            <div class="help" style="margin-bottom:8px;">
+</div>
+</div>
+<div class="modal-overlay hidden" id="supplierMasterModal">
+<div class="modal-panel">
+<div class="modal-scroll">
+<div class="supplier-master-card" id="supplierMasterCard">
+<div class="supplier-master-head">
+<div>
+<div class="section-title" style="margin-bottom:4px;">ドレー単価マスタ編集</div>
+<div class="help">仕入先名、国内輸送区分、国内輸送費（車単価）、積載量を編集できます。</div>
+</div>
+<div class="help" style="margin-bottom:8px;">
               件数が多い場合は下へスクロールして編集できます。
             </div>
-          </div>
-          <div class="supplier-table-wrap">
-            <table class="supplier-table">
-              <thead>
-                <tr>
-                  <th style="width:32%;">仕入先・ヤード名</th>
-                  <th style="width:18%;">輸送種類</th>
-                  <th style="width:22%;">輸送費（車単価）</th>
-                  <th style="width:18%;">積載量 (t)</th>
-                  <th style="width:10%;">削除</th>
-                </tr>
-              </thead>
-              <tbody id="supplierMasterBody"></tbody>
-            </table>
-          </div>
-        </div>
-        </div>
-        <div class="modal-footer">
-          <button id="addSupplierRowBtn" class="secondary small-btn" type="button">行を追加</button>
-          <button id="closeSupplierMasterBtn" class="ghost small-btn" type="button">閉じる</button>
-          <button id="saveSupplierMasterBtn" class="small-btn" type="button">保存</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">7. 補足</div>
-      <div class="muted-box">
-        ・販売単価→仕入可能単価では、販売単価から必要経費を差し引き、最終的に円/kgを表示します。<br />
-        ・仕入単価→販売単価では、仕入単価から逆算し、CIF/CFR は USD/ton、FOB/CY/倉庫渡し は 円/kg で表示します。<br />
-        ・Lot・件は同義として扱い、船積み単位数量で重量単価に換算して計算します。<br />
-        ・為替仲値欄は手入力向けです。参考相場は前営業日の為替から▲1円差引いたレートです。<br />
+</div>
+<div class="supplier-table-wrap">
+<table class="supplier-table">
+<thead>
+<tr>
+<th style="width:32%;">仕入先・ヤード名</th>
+<th style="width:18%;">輸送種類</th>
+<th style="width:22%;">輸送費（車単価）</th>
+<th style="width:18%;">積載量 (t)</th>
+<th style="width:10%;">削除</th>
+</tr>
+</thead>
+<tbody id="supplierMasterBody"></tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="modal-footer">
+<button class="secondary small-btn" id="addSupplierRowBtn" type="button">行を追加</button>
+<button class="ghost small-btn" id="closeSupplierMasterBtn" type="button">閉じる</button>
+<button class="small-btn" id="saveSupplierMasterBtn" type="button">保存</button>
+</div>
+</div>
+</div>
+<div class="modal-overlay hidden" id="savedDataModal">
+<div class="modal-panel" style="max-width:560px; height:auto; max-height:min(72vh,560px);">
+<div class="modal-scroll">
+<div class="supplier-master-card" style="padding:16px 16px 24px;">
+<div class="section-title" style="margin-bottom:10px;">保存データ呼出</div>
+<div class="help" style="margin-bottom:12px;">保存名は「仕入先名 品目」です。同じ保存名は上書きされます。</div>
+<div class="field">
+<label for="savedDataSelect">保存済みデータ</label>
+<select class="saved-data-select" id="savedDataSelect">
+<option value="">選択してください</option>
+</select>
+</div>
+</div>
+</div>
+<div class="modal-footer">
+<button class="ghost small-btn" id="deleteSavedDataBtn" type="button">削除</button>
+<button class="ghost small-btn" id="closeSavedDataBtn" type="button">閉じる</button>
+<button class="small-btn" id="applySavedDataBtn" type="button">呼出</button>
+</div>
+</div>
+</div>
+<div class="card">
+<div class="section-title">7. 補足</div>
+<div class="muted-box">
+        ・販売単価→仕入可能単価では、販売単価から必要経費を差し引き、最終的に円/kgを表示します。<br/>
+        ・仕入単価→販売単価では、仕入単価から逆算し、CIF/CFR は USD/ton、FOB/CY/倉庫渡し は 円/kg で表示します。<br/>
+        ・Lot・件は同義として扱い、船積み単位数量で重量単価に換算して計算します。<br/>
+        ・為替仲値欄は手入力向けです。参考相場は前営業日の為替から▲1円差引いたレートです。<br/>
 	・ドレー単価マスタは各自のスマホ/PCに保存され、他の方と共有されません。	
       </div>
-    </div>
-  </div>
-
-  <script>
+</div>
+</div>
+<script>
     const els = {
       modeSellBtn: document.getElementById('modeSellBtn'),
       modeBuyBtn: document.getElementById('modeBuyBtn'),
@@ -1097,6 +1172,12 @@ function initSalePricePlaceholder() {
       domesticTransportCard: document.getElementById('domesticTransportCard'),
       calcBtn: document.getElementById('calcBtn'),
       saveBtn: document.getElementById('saveBtn'),
+      loadDataBtn: document.getElementById('loadDataBtn'),
+      savedDataModal: document.getElementById('savedDataModal'),
+      savedDataSelect: document.getElementById('savedDataSelect'),
+      applySavedDataBtn: document.getElementById('applySavedDataBtn'),
+      deleteSavedDataBtn: document.getElementById('deleteSavedDataBtn'),
+      closeSavedDataBtn: document.getElementById('closeSavedDataBtn'),
       printBtn: document.getElementById('printBtn'),
       excelExportBtn: document.getElementById('excelExportBtn'),
       fxDownBtn: document.getElementById('fxDownBtn'),
@@ -1110,6 +1191,7 @@ function initSalePricePlaceholder() {
 
 
     const STORAGE_KEY = 'koshi-export-cost-calculator-original-design-v2';
+    const NAMED_SAVE_KEY = 'koshi-export-cost-calculator-named-saves-v1';
     const SUPPLIER_MASTER_KEY = 'koshi-export-supplier-master-v1';
     const DEFAULT_SUPPLIERS = [
       { id: 's1', name: '仕入先A', transportType: 'DRAY', transportCost: '35000', transportLoad: '22' },
@@ -1148,6 +1230,19 @@ function initSalePricePlaceholder() {
       els.warningBox.classList.toggle('warning', !ok);
       els.warningBox.textContent = msg;
     }
+    
+    let saveToastTimer = null;
+    function showSaveToast(message) {
+      const toast = document.getElementById('saveToast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.classList.add('show');
+      if (saveToastTimer) clearTimeout(saveToastTimer);
+      saveToastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2200);
+    }
+
     function hideWarning() {
       els.warningBox.classList.add('hidden');
       els.warningBox.classList.remove('success');
@@ -1304,7 +1399,6 @@ function initSalePricePlaceholder() {
       closeSupplierMasterModal();
       if (showMsg) {
         showWarning('保存しました。', true);
-        setTimeout(() => hideWarning(), 1800);
       }
     }
 
@@ -1446,7 +1540,7 @@ function initSalePricePlaceholder() {
     function saveCurrentTransportToSupplier() {
       const supplierName = String(els.supplierSelect.value || '').trim();
       if (!supplierName) {
-        showWarning('先に仕入先を選択してください。');
+        showSaveToast('仕入先を選択してから保存してください。');
         return;
       }
 
@@ -1479,6 +1573,104 @@ function initSalePricePlaceholder() {
       state.selectedSupplierId = supplierName;
       flashSupplierAutoFilledFields();
       showWarning('現在の国内輸送条件を選択中の仕入先へ保存しました。', true);
+      setTimeout(() => hideWarning(), 1800);
+    }
+
+    function getNamedSaveTitle() {
+      const supplierName = String(els.supplierSelect?.value || '').trim();
+      const itemName = String(els.itemCategory?.value || '').trim();
+      if (!supplierName) return '';
+      if (!itemName) return supplierName;
+      return supplierName + ' ' + itemName;
+    }
+
+    function loadNamedSaves() {
+      try {
+        const raw = localStorage.getItem(NAMED_SAVE_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveNamedSaves(data) {
+      localStorage.setItem(NAMED_SAVE_KEY, JSON.stringify(data || {}));
+    }
+
+    function refreshSavedDataSelect(selectedKey = '') {
+      if (!els.savedDataSelect) return;
+      const saves = loadNamedSaves();
+      const keys = Object.keys(saves).sort((a, b) => a.localeCompare(b, 'ja'));
+      els.savedDataSelect.innerHTML = ['<option value="">選択してください</option>']
+        .concat(keys.map(key => `<option value="${escapeHtml(key)}">${escapeHtml(key)}</option>`))
+        .join('');
+      if (selectedKey && saves[selectedKey]) {
+        els.savedDataSelect.value = selectedKey;
+      }
+    }
+
+    function openSavedDataModal() {
+      refreshSavedDataSelect();
+      els.savedDataModal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSavedDataModal() {
+      els.savedDataModal.classList.add('hidden');
+      if (els.supplierMasterModal.classList.contains('hidden')) {
+        document.body.style.overflow = '';
+      }
+    }
+
+    function saveNamedFormData() {
+      const title = getNamedSaveTitle();
+      if (!title) {
+        showSaveToast('仕入先を選択してから保存してください。');
+        return;
+      }
+      const saves = loadNamedSaves();
+      const payload = getFormData();
+      payload.savedAt = new Date().toISOString();
+      saves[title] = payload;
+      saveNamedSaves(saves);
+      refreshSavedDataSelect(title);
+      showSaveToast(title + ' で保存しました。');
+      setTimeout(() => hideWarning(), 1800);
+    }
+
+    function applySelectedSavedData() {
+      const key = String(els.savedDataSelect?.value || '').trim();
+      if (!key) {
+        showWarning('呼出する保存データを選択してください。');
+        return;
+      }
+      const saves = loadNamedSaves();
+      if (!saves[key]) {
+        showWarning('選択した保存データが見つかりませんでした。');
+        refreshSavedDataSelect();
+        return;
+      }
+      applyFormData(saves[key]);
+      saveData(false);
+      closeSavedDataModal();
+      showWarning('「' + key + '」を呼出しました。', true);
+      setTimeout(() => hideWarning(), 1800);
+    }
+
+    function deleteSelectedSavedData() {
+      const key = String(els.savedDataSelect?.value || '').trim();
+      if (!key) {
+        showWarning('削除する保存データを選択してください。');
+        return;
+      }
+      const ok = window.confirm('「' + key + '」を削除します。よろしいですか？');
+      if (!ok) return;
+      const saves = loadNamedSaves();
+      delete saves[key];
+      saveNamedSaves(saves);
+      refreshSavedDataSelect();
+      showWarning('「' + key + '」を削除しました。', true);
       setTimeout(() => hideWarning(), 1800);
     }
 
@@ -1552,8 +1744,7 @@ function initSalePricePlaceholder() {
     function saveData(showMsg = true) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(getFormData()));
       if (showMsg) {
-        showWarning('入力内容を端末内に保存しました。', true);
-        setTimeout(() => hideWarning(), 1800);
+        showSaveToast(title + ' で保存しました。');
       }
     }
     function loadData() {
@@ -2391,6 +2582,33 @@ function refreshUI() {
       font-size: 1.12rem;
     }
 
+
+    .save-toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(20px + env(safe-area-inset-bottom));
+      transform: translateX(-50%) translateY(18px);
+      min-width: min(88vw, 320px);
+      max-width: 88vw;
+      padding: 12px 18px;
+      border-radius: 14px;
+      background: rgba(23, 50, 77, 0.96);
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.92rem;
+      text-align: center;
+      box-shadow: 0 14px 34px rgba(0,0,0,0.22);
+      z-index: 99999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .28s ease, transform .32s ease;
+      backdrop-filter: blur(8px);
+    }
+    .save-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
 </style>
 </head>
 <body>
@@ -2498,6 +2716,8 @@ function refreshUI() {
     })();
   <\/script>
 
+
+  <div id="saveToast" class="save-toast" aria-live="polite"></div>
 </body>
 </html>`;
     }
@@ -2529,8 +2749,7 @@ function refreshUI() {
           iframe.contentWindow.focus();
           iframe.contentWindow.print();
           showWarning('印刷画面を開きました。', true);
-          setTimeout(() => hideWarning(), 1800);
-        } catch (err) {
+          } catch (err) {
           console.error(err);
           showWarning('印刷画面を開けませんでした。');
         }
@@ -3194,7 +3413,6 @@ async function exportStyledExcelFromTemplate(templateBase64, patches, safeName) 
         }
 
         showWarning('Excelファイルを出力しました。', true);
-        setTimeout(() => hideWarning(), 1800);
       } catch (e) {
         console.error(e);
         showWarning('Excel出力に失敗しました。通信環境またはテンプレートをご確認ください。');
@@ -3545,6 +3763,14 @@ els.fxRate.addEventListener('blur', () => {
     els.printBtn.addEventListener('click', printEstimate);
     els.excelExportBtn.addEventListener('click', exportEstimateToExcel);
     document.getElementById('resetBtnTop').addEventListener('click', resetData);
+    els.saveBtn.addEventListener('click', saveNamedFormData);
+    els.loadDataBtn.addEventListener('click', openSavedDataModal);
+    els.closeSavedDataBtn.addEventListener('click', closeSavedDataModal);
+    els.applySavedDataBtn.addEventListener('click', applySelectedSavedData);
+    els.deleteSavedDataBtn.addEventListener('click', deleteSelectedSavedData);
+    els.savedDataModal.addEventListener('click', e => {
+      if (e.target === els.savedDataModal) closeSavedDataModal();
+    });
     window.addEventListener('beforeunload', () => saveData(false));
 
     [
@@ -3603,7 +3829,12 @@ els.fxRate.addEventListener('blur', () => {
       if (e.target === els.supplierMasterModal) closeSupplierMasterModal();
     });
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && !els.supplierMasterModal.classList.contains('hidden')) {
+      if (e.key !== 'Escape') return;
+      if (!els.savedDataModal.classList.contains('hidden')) {
+        closeSavedDataModal();
+        return;
+      }
+      if (!els.supplierMasterModal.classList.contains('hidden')) {
         closeSupplierMasterModal();
       }
     });
@@ -3616,6 +3847,7 @@ els.fxRate.addEventListener('blur', () => {
 
     loadSupplierMaster();
     loadData();
+    refreshSavedDataSelect();
     initSalePricePlaceholder();
   
 
@@ -3652,19 +3884,15 @@ function initSalePricePlaceholder() {
 
 
 </script>
-
-  <div id="updatePopup" class="update-popup hidden" role="dialog" aria-live="polite" aria-label="更新通知">
-    <div class="update-popup-title">新しいバージョンがあります</div>
-    <div class="update-popup-text" id="updatePopupText">最新版を確認しています…</div>
-    <div class="update-popup-actions">
-      <button type="button" class="later-btn" id="updateLaterBtn">あとで</button>
-      <button type="button" class="update-btn" id="updateNowBtn">更新する</button>
-    </div>
-  </div>
-
-
-
-  <script>
+<div aria-label="更新通知" aria-live="polite" class="update-popup hidden" id="updatePopup" role="dialog">
+<div class="update-popup-title">新しいバージョンがあります</div>
+<div class="update-popup-text" id="updatePopupText">最新版を確認しています…</div>
+<div class="update-popup-actions">
+<button class="later-btn" id="updateLaterBtn" type="button">あとで</button>
+<button class="update-btn" id="updateNowBtn" type="button">更新する</button>
+</div>
+</div>
+<script>
     (function () {
       const LAST_MODIFIED_KEY = 'koshi-export-last-modified';
       const POPUP_HIDE_KEY = 'koshi-export-update-popup-hide';
@@ -3776,5 +4004,6 @@ function initSalePricePlaceholder() {
 
 </script>
 
+  <div id="saveToast" class="save-toast" aria-live="polite"></div>
 </body>
 </html>
