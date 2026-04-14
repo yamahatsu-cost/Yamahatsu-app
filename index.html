@@ -658,18 +658,24 @@ function initSalePricePlaceholder() {
     /* update popup */
     .update-popup {
       position: fixed;
-      left: 14px;
-      right: 14px;
-      bottom: calc(14px + env(safe-area-inset-bottom));
+      left: 50%;
+      top: calc(16px + env(safe-area-inset-top));
+      right: auto;
+      bottom: auto;
+      transform: translateX(-50%) translateY(-18px);
+      width: min(92vw, 560px);
       z-index: 99999;
-      background: rgba(23, 50, 77, 0.96);
+      background: rgba(0, 0, 0, 0.92);
       color: #fff;
       border-radius: 16px;
-      box-shadow: 0 16px 36px rgba(0,0,0,0.22);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.32);
       padding: 14px;
       backdrop-filter: blur(8px);
+      opacity: 0;
+      transition: opacity .28s ease, transform .32s ease;
     }
     .update-popup.hidden { display: none !important; }
+    .update-popup:not(.hidden) { opacity: 1; transform: translateX(-50%) translateY(0); }
     .update-popup-title {
       font-size: 0.98rem;
       font-weight: 800;
@@ -695,13 +701,13 @@ function initSalePricePlaceholder() {
       box-shadow: none;
     }
     .update-popup-actions .later-btn {
-      background: rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.10);
       color: #fff;
       border: 1px solid rgba(255,255,255,0.24);
     }
     .update-popup-actions .update-btn {
       background: #fff;
-      color: #17324d;
+      color: #000;
       border: 1px solid rgba(255,255,255,0.5);
     }
 
@@ -766,18 +772,18 @@ function initSalePricePlaceholder() {
     .save-toast {
       position: fixed;
       left: 50%;
-      bottom: calc(20px + env(safe-area-inset-bottom));
-      transform: translateX(-50%) translateY(18px);
+      top: calc(16px + env(safe-area-inset-top));
+      transform: translateX(-50%) translateY(-18px);
       min-width: min(88vw, 320px);
-      max-width: 88vw;
+      max-width: min(88vw, 560px);
       padding: 12px 18px;
       border-radius: 14px;
-      background: rgba(23, 50, 77, 0.96);
+      background: rgba(0, 0, 0, 0.92);
       color: #fff;
       font-weight: 800;
       font-size: 0.92rem;
       text-align: center;
-      box-shadow: 0 14px 34px rgba(0,0,0,0.22);
+      box-shadow: 0 14px 34px rgba(0,0,0,0.32);
       z-index: 99999;
       opacity: 0;
       pointer-events: none;
@@ -1225,28 +1231,46 @@ function initSalePricePlaceholder() {
       return Number(v).toLocaleString('ja-JP', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
     }
     function showWarning(msg, ok = false) {
-      els.warningBox.classList.remove('hidden');
-      els.warningBox.classList.toggle('success', ok);
-      els.warningBox.classList.toggle('warning', !ok);
-      els.warningBox.textContent = msg;
+      if (els.warningBox) {
+        els.warningBox.classList.add('hidden');
+        els.warningBox.textContent = '';
+      }
+      showUnifiedToast(msg);
     }
     
     let saveToastTimer = null;
-    function showSaveToast(message) {
-      const toast = document.getElementById('saveToast');
+    function getUnifiedToastEl() {
+      return document.getElementById('saveToast');
+    }
+
+    function hideUnifiedToast() {
+      const toast = getUnifiedToastEl();
+      if (!toast) return;
+      toast.classList.remove('show');
+    }
+
+    function showUnifiedToast(message, duration = 1000) {
+      const toast = getUnifiedToastEl();
       if (!toast) return;
       toast.textContent = message;
       toast.classList.add('show');
       if (saveToastTimer) clearTimeout(saveToastTimer);
       saveToastTimer = setTimeout(() => {
-        toast.classList.remove('show');
-      }, 2200);
+        hideUnifiedToast();
+      }, duration);
+    }
+
+    function showSaveToast(message) {
+      showUnifiedToast(message, 1000);
     }
 
     function hideWarning() {
-      els.warningBox.classList.add('hidden');
-      els.warningBox.classList.remove('success');
-      els.warningBox.classList.add('warning');
+      if (els.warningBox) {
+        els.warningBox.classList.add('hidden');
+        els.warningBox.classList.remove('success');
+        els.warningBox.classList.add('warning');
+      }
+      hideUnifiedToast();
     }
 
     function formatFx() {
@@ -1573,7 +1597,7 @@ function initSalePricePlaceholder() {
       state.selectedSupplierId = supplierName;
       flashSupplierAutoFilledFields();
       showWarning('現在の国内輸送条件を選択中の仕入先へ保存しました。', true);
-      setTimeout(() => hideWarning(), 1800);
+      setTimeout(() => hideWarning(), 1000);
     }
 
     function getNamedSaveTitle() {
@@ -1636,7 +1660,7 @@ function initSalePricePlaceholder() {
       saveNamedSaves(saves);
       refreshSavedDataSelect(title);
       showSaveToast(title + ' で保存しました。');
-      setTimeout(() => hideWarning(), 1800);
+      setTimeout(() => hideWarning(), 1000);
     }
 
     function applySelectedSavedData() {
@@ -1655,7 +1679,7 @@ function initSalePricePlaceholder() {
       saveData(false);
       closeSavedDataModal();
       showWarning('「' + key + '」を呼出しました。', true);
-      setTimeout(() => hideWarning(), 1800);
+      setTimeout(() => hideWarning(), 1000);
     }
 
     function deleteSelectedSavedData() {
@@ -1671,7 +1695,7 @@ function initSalePricePlaceholder() {
       saveNamedSaves(saves);
       refreshSavedDataSelect();
       showWarning('「' + key + '」を削除しました。', true);
-      setTimeout(() => hideWarning(), 1800);
+      setTimeout(() => hideWarning(), 1000);
     }
 
     function getFormData() {
@@ -2524,18 +2548,24 @@ function refreshUI() {
     /* update popup */
     .update-popup {
       position: fixed;
-      left: 14px;
-      right: 14px;
-      bottom: calc(14px + env(safe-area-inset-bottom));
+      left: 50%;
+      top: calc(16px + env(safe-area-inset-top));
+      right: auto;
+      bottom: auto;
+      transform: translateX(-50%) translateY(-18px);
+      width: min(92vw, 560px);
       z-index: 99999;
-      background: rgba(23, 50, 77, 0.96);
+      background: rgba(0, 0, 0, 0.92);
       color: #fff;
       border-radius: 16px;
-      box-shadow: 0 16px 36px rgba(0,0,0,0.22);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.32);
       padding: 14px;
       backdrop-filter: blur(8px);
+      opacity: 0;
+      transition: opacity .28s ease, transform .32s ease;
     }
     .update-popup.hidden { display: none !important; }
+    .update-popup:not(.hidden) { opacity: 1; transform: translateX(-50%) translateY(0); }
     .update-popup-title {
       font-size: 0.98rem;
       font-weight: 800;
@@ -2561,13 +2591,13 @@ function refreshUI() {
       box-shadow: none;
     }
     .update-popup-actions .later-btn {
-      background: rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.10);
       color: #fff;
       border: 1px solid rgba(255,255,255,0.24);
     }
     .update-popup-actions .update-btn {
       background: #fff;
-      color: #17324d;
+      color: #000;
       border: 1px solid rgba(255,255,255,0.5);
     }
 
@@ -2586,18 +2616,18 @@ function refreshUI() {
     .save-toast {
       position: fixed;
       left: 50%;
-      bottom: calc(20px + env(safe-area-inset-bottom));
-      transform: translateX(-50%) translateY(18px);
+      top: calc(16px + env(safe-area-inset-top));
+      transform: translateX(-50%) translateY(-18px);
       min-width: min(88vw, 320px);
-      max-width: 88vw;
+      max-width: min(88vw, 560px);
       padding: 12px 18px;
       border-radius: 14px;
-      background: rgba(23, 50, 77, 0.96);
+      background: rgba(0, 0, 0, 0.92);
       color: #fff;
       font-weight: 800;
       font-size: 0.92rem;
       text-align: center;
-      box-shadow: 0 14px 34px rgba(0,0,0,0.22);
+      box-shadow: 0 14px 34px rgba(0,0,0,0.32);
       z-index: 99999;
       opacity: 0;
       pointer-events: none;
