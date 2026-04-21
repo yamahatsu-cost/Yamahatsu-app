@@ -867,6 +867,39 @@ function initSalePricePlaceholder() {
       }
     }
 
+
+
+    @media (min-width: 700px) {
+      /* PC版のみ: 実コスト系は右寄せ、調整値・数量系は中央 */
+      #doFee,
+      #customsFee,
+      #handlingFee,
+      #domesticTransportCost,
+      #seaFreight {
+        text-align: right;
+      }
+
+      #overseasCom,
+      #lcFee,
+      #ourMargin,
+      #salePrice,
+      #buyPrice,
+      #fxRate,
+      #lotQty,
+      #containerLoad,
+      #transportLoad,
+      #storageFee,
+      #shortDrayCost,
+      #insuranceRate {
+        text-align: center;
+      }
+
+      select {
+        text-align: center;
+        text-align-last: center;
+      }
+    }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -877,7 +910,7 @@ function initSalePricePlaceholder() {
 <div class="app">
 <div class="app-header">
 <h1>輸出コスト計算</h1>
-<div class="subtitle">山發日本株式会社 社内アプリ Ver_4.16</div>
+<div class="subtitle">山發日本株式会社 社内アプリ Ver_4.15</div>
 <div class="header-action-row">
 <div class="header-pill-group">
 
@@ -916,11 +949,11 @@ function initSalePricePlaceholder() {
 <div class="row three" id="basicTopRow">
 <div class="field" id="salePriceField">
 <label for="salePrice" id="salePriceLabel">販売単価</label>
-<input id="salePrice" placeholder="例）160" step="1" type="number"/>
+<input id="salePrice" inputmode="decimal" placeholder="例）160" step="1" type="text"/>
 </div>
 <div class="field hidden" id="buyPriceField">
 <label for="buyPrice" id="buyPriceLabel">仕入単価</label>
-<input id="buyPrice" placeholder="例: 19.9" step="0.1" type="number"/>
+<input id="buyPrice" inputmode="decimal" placeholder="例: 19.9" step="0.1" type="text"/>
 </div>
 <div class="field">
 <label for="currencyType" id="currencyTypeLabel">販売単価 通貨</label>
@@ -1013,21 +1046,21 @@ function initSalePricePlaceholder() {
 </div>
 <div class="field" id="seaFreightField">
 <label for="seaFreight">海上運賃（40F＊EBS等込み)</label>
-<input id="seaFreight" placeholder="例）400" step="10" type="number" value=""/>
+<input id="seaFreight" inputmode="decimal" placeholder="例）400" step="10" type="text" value=""/>
 </div>
 <div class="field" id="doFeeField">
 <label for="doFee" id="doFeeLabel">Do Fee (円/Lot)</label>
-<input id="doFee" step="1" type="number" value="7980"/>
+<input id="doFee" inputmode="numeric" step="1" type="text" value="7980"/>
 </div>
 </div>
 <div class="row three">
 <div class="field" id="customsFeeField">
 <label for="customsFee">通関費 (円/件)</label>
-<input id="customsFee" step="1" type="number" value="5900"/>
+<input id="customsFee" inputmode="numeric" step="1" type="text" value="5900"/>
 </div>
 <div class="field" id="handlingFeeField">
 <label for="handlingFee">取扱費 (円/件)</label>
-<input id="handlingFee" step="1000" type="number" value="15000"/>
+<input id="handlingFee" inputmode="numeric" step="1000" type="text" value="15000"/>
 </div>
 <div class="field hidden" id="insuranceField">
 <label for="insuranceRate">海上保険率 (%)</label>
@@ -1062,7 +1095,7 @@ function initSalePricePlaceholder() {
 </div>
 <div class="field">
 <label for="domesticTransportCost" id="domesticTransportCostLabel">国内輸送費（車単価）</label>
-<input id="domesticTransportCost" placeholder="例）35000" step="1000" type="number" value=""/>
+<input id="domesticTransportCost" inputmode="numeric" placeholder="例）35000" step="1000" type="text" value=""/>
 <input id="transportUnitPreview" type="hidden" value=""/>
 </div>
 </div>
@@ -1285,8 +1318,88 @@ function initSalePricePlaceholder() {
     };
 
     function n(v) {
-      const x = parseFloat(v);
+      const x = parseFloat(String(v ?? '').replace(/,/g, ''));
       return Number.isFinite(x) ? x : 0;
+    }
+
+    function formatCurrencyValue(value, currency) {
+      const raw = String(value ?? '').replace(/,/g, '').trim();
+      if (raw === '' || raw === '-' || raw === '.' || raw === '-.' ) return '';
+      const num = Number(raw);
+      if (!Number.isFinite(num)) return raw;
+      if (currency === 'JPY') {
+        return Math.round(num).toLocaleString('ja-JP');
+      }
+      return num.toLocaleString('ja-JP', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function sanitizeCurrencyInput(value, currency) {
+      let sanitized = String(value ?? '').replace(/,/g, '').replace(/[^0-9.-]/g, '');
+      sanitized = sanitized.replace(/(?!^)-/g, '');
+      const firstDot = sanitized.indexOf('.');
+      if (firstDot !== -1) {
+        sanitized = sanitized.slice(0, firstDot + 1) + sanitized.slice(firstDot + 1).replace(/\./g, '');
+      }
+      if (currency === 'JPY' && sanitized.includes('.')) {
+        sanitized = sanitized.split('.')[0];
+      }
+      return sanitized;
+    }
+
+    function getInputCurrency(el) {
+      if (!el) return 'JPY';
+      if (el.id === 'salePrice' || el.id === 'buyPrice') return els.currencyType.value === 'JPY' ? 'JPY' : 'USD';
+      if (el.id === 'seaFreight') return els.freightCurrency.value === 'JPY' ? 'JPY' : 'USD';
+      return 'JPY';
+    }
+
+    function applyFormattedValue(el, options = {}) {
+      if (!el) return;
+      const currency = options.currency || getInputCurrency(el);
+      const preserveBlank = options.preserveBlank !== false;
+      const raw = String(el.value ?? '').replace(/,/g, '').trim();
+      if (raw === '') {
+        if (!preserveBlank) el.value = currency === 'USD' ? '0.00' : '0';
+        return;
+      }
+      el.value = formatCurrencyValue(raw, currency);
+    }
+
+    function bindFormattedInput(el, currencyResolver) {
+      if (!el || el.dataset.formatBound === '1') return;
+      el.dataset.formatBound = '1';
+      el.style.textAlign = 'center';
+      el.addEventListener('focus', () => {
+        el.value = String(el.value ?? '').replace(/,/g, '');
+        const inputMode = (currencyResolver() === 'USD') ? 'decimal' : 'numeric';
+        el.setAttribute('inputmode', inputMode);
+      });
+      el.addEventListener('input', () => {
+        const currency = currencyResolver();
+        const sanitized = sanitizeCurrencyInput(el.value, currency);
+        if (el.value !== sanitized) el.value = sanitized;
+      });
+      el.addEventListener('blur', () => applyFormattedValue(el, { currency: currencyResolver() }));
+    }
+
+    function refreshFormattedInputs() {
+      [els.salePrice, els.buyPrice, els.seaFreight, els.doFee, els.customsFee, els.handlingFee, els.domesticTransportCost].forEach(el => {
+        if (!el) return;
+        el.style.textAlign = 'center';
+        el.setAttribute('inputmode', getInputCurrency(el) === 'USD' ? 'decimal' : 'numeric');
+        applyFormattedValue(el, { currency: getInputCurrency(el) });
+      });
+    }
+
+    function bindFormattedInputs() {
+      bindFormattedInput(els.salePrice, () => getInputCurrency(els.salePrice));
+      bindFormattedInput(els.buyPrice, () => getInputCurrency(els.buyPrice));
+      bindFormattedInput(els.seaFreight, () => getInputCurrency(els.seaFreight));
+      bindFormattedInput(els.doFee, () => 'JPY');
+      bindFormattedInput(els.customsFee, () => 'JPY');
+      bindFormattedInput(els.handlingFee, () => 'JPY');
+      bindFormattedInput(els.domesticTransportCost, () => 'JPY');
+      refreshFormattedInputs();
     }
     function floor2(v) { return Math.floor(v * 100) / 100; }
     function floor0(v) { return Math.floor(v); }
@@ -1448,6 +1561,7 @@ function initSalePricePlaceholder() {
 
       syncTransportLoadWithContainer();
       refreshUI();
+      refreshFormattedInputs();
       updateCalcButtonState();
       saveData(false);
     }
@@ -1835,6 +1949,7 @@ function initSalePricePlaceholder() {
       }
       refreshUI();
       if (state.selectedSupplierId) applySelectedSupplier(true);
+      refreshFormattedInputs();
     }
 
     function saveData(showMsg = true) {
@@ -1850,7 +1965,7 @@ function initSalePricePlaceholder() {
         applyItemPreset();
         return;
       }
-      try { applyFormData(JSON.parse(raw)); if (String(els.fxRate.value).trim() !== '') formatFx(); } catch (e) { refreshUI(); }
+      try { applyFormData(JSON.parse(raw)); if (String(els.fxRate.value).trim() !== '') formatFx(); refreshFormattedInputs(); } catch (e) { refreshUI(); }
     }
     function resetData() {
       localStorage.removeItem(STORAGE_KEY);
@@ -2086,6 +2201,7 @@ function refreshUI() {
       els.customsFeeField.classList.toggle('hidden', isCY || isWH);
       els.handlingFeeField.classList.toggle('hidden', isCY || isWH);
       els.lotQtyField.classList.toggle('hidden', isCY || isWH);
+      refreshFormattedInputs();
       els.containerLoad.parentElement.classList.toggle('hidden', isCY || isWH);
       els.doFeeLabel.textContent = isFOB ? 'THC (円/40F)' : 'Do Fee (円/Lot)';
 
@@ -3899,6 +4015,7 @@ els.fxRate.addEventListener('blur', () => {
 
     els.freightCurrency.addEventListener('change', () => {
       updateSeaFreightInputState(true);
+      refreshFormattedInputs();
       updateCalcButtonState();
       saveData(false);
     });
@@ -3913,6 +4030,8 @@ els.fxRate.addEventListener('blur', () => {
       els.freightCurrency,
       els.domesticTransportType
     ].forEach(el => el.addEventListener('change', updateCalcButtonState));
+
+    els.currencyType.addEventListener('change', refreshFormattedInputs);
 
 
     function openSupplierMasterModal() {
@@ -3951,6 +4070,7 @@ els.fxRate.addEventListener('blur', () => {
     loadData();
     refreshSavedDataSelect();
     initSalePricePlaceholder();
+    bindFormattedInputs();
   
 
 // 販売単価プレースホルダー制御
