@@ -298,6 +298,7 @@ function initSalePricePlaceholder() {
       .supplier-table td:nth-child(4)::before { content: "積載量 (t)"; }
       .supplier-table td:nth-child(5)::before { content: "削除"; }
       .supplier-table td input, .supplier-table td select, .supplier-table td button { width: 100%; }
+      .supplier-table td select { text-align: center; text-align-last: center; }
       .supplier-master-head {
         position: static;
         background: #f9fcff;
@@ -879,6 +880,8 @@ function initSalePricePlaceholder() {
       min-width: 0;
     }
     .select-wrap select {
+      text-align: center;
+      text-align-last: center;
       -webkit-appearance: none;
       appearance: none;
       width: 100%;
@@ -967,6 +970,13 @@ function initSalePricePlaceholder() {
         text-align: center;
       }
 
+      select {
+        text-align: center;
+        text-align-last: center;
+      }
+    }
+
+    @media (max-width: 699px) {
       select {
         text-align: center;
         text-align-last: center;
@@ -1458,7 +1468,7 @@ function initSalePricePlaceholder() {
     }
 
     function refreshFormattedInputs() {
-      [els.salePrice, els.buyPrice, els.seaFreight, els.doFee, els.customsFee, els.handlingFee, els.domesticTransportCost].forEach(el => {
+      [els.salePrice, els.buyPrice, els.seaFreight, els.doFee, els.customsFee, els.handlingFee, els.domesticTransportCost, els.storageFee].forEach(el => {
         if (!el) return;
         el.style.textAlign = 'center';
         el.setAttribute('inputmode', getInputCurrency(el) === 'USD' ? 'decimal' : 'numeric');
@@ -1474,6 +1484,7 @@ function initSalePricePlaceholder() {
       bindFormattedInput(els.customsFee, () => 'JPY');
       bindFormattedInput(els.handlingFee, () => 'JPY');
       bindFormattedInput(els.domesticTransportCost, () => 'JPY');
+      bindFormattedInput(els.storageFee, () => 'JPY');
       refreshFormattedInputs();
     }
     function floor2(v) { return Math.floor(v * 100) / 100; }
@@ -2921,6 +2932,13 @@ function refreshUI() {
     .save-toast.show {
       opacity: 1;
       transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 699px) {
+      select {
+        text-align: center;
+        text-align-last: center;
+      }
     }
 
 </style>
