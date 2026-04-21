@@ -905,6 +905,66 @@ function initSalePricePlaceholder() {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+
+<style>
+/* FINAL MOBILE CENTER FIX v2 */
+@media (max-width: 699px) {
+  /* all text inputs centered on mobile */
+  input[type="text"],
+  input[type="number"],
+  input:not([type]) {
+    text-align: center !important;
+  }
+
+  /* all selects centered on mobile by default */
+  select {
+    text-align: center !important;
+    text-align-last: center !important;
+    padding-left: 12px !important;
+    padding-right: 40px !important;
+  }
+
+  /* keep only these four selects left aligned */
+  #currencyType,
+  #unitType,
+  #freightCurrency,
+  #domesticTransportType {
+    text-align: left !important;
+    text-align-last: left !important;
+  }
+
+  /* targeted non-exception selects explicitly centered */
+  #itemCategory,
+  #salesTerm,
+  #purchaseTerm,
+  #lcFee,
+  #supplierSelect,
+  #savedDataSelect {
+    text-align: center !important;
+    text-align-last: center !important;
+  }
+
+  /* explicit input centering for key fields */
+  #salePrice,
+  #buyPrice,
+  #lotQty,
+  #containerLoad,
+  #fxRate,
+  #overseasCom,
+  #ourMargin,
+  #seaFreight,
+  #doFee,
+  #customsFee,
+  #handlingFee,
+  #transportLoad,
+  #domesticTransportCost,
+  #storageFee,
+  #shortDrayCost {
+    text-align: center !important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="app">
