@@ -2827,6 +2827,127 @@ function refreshUI() {
       transform: translateX(-50%) translateY(0);
     }
 
+
+
+/* ===== FINAL MOBILE OVERRIDE: guaranteed layout/alignment ===== */
+@media (max-width: 699px) {
+  /* base alignment */
+  input, select { text-align: center !important; }
+  select { text-align-last: center !important; }
+
+  /* exceptions requested by user */
+  #currencyType,
+  #unitType,
+  #freightCurrency,
+  #domesticTransportType {
+    text-align: left !important;
+    text-align-last: left !important;
+  }
+
+  /* unified touch height */
+  input,
+  select,
+  button {
+    min-height: 48px !important;
+    height: 48px !important;
+    padding: 10px 12px !important;
+    font-size: 16px !important;
+    line-height: 1.2 !important;
+  }
+  .spin-btn,
+  .spin-input-wrap input {
+    min-height: 48px !important;
+    height: 48px !important;
+  }
+
+  /* label left / input right for target sections only */
+  .field:has(> #itemCategory),
+  #basicTopRow .field,
+  #termRow .field:not(#fxRateField),
+  #exportCostCard .field,
+  #domesticTransportCard .field:not(#fxRateField) {
+    display: grid !important;
+    grid-template-columns: 132px minmax(0, 1fr) !important;
+    column-gap: 10px !important;
+    row-gap: 6px !important;
+    align-items: center !important;
+  }
+
+  .field:has(> #itemCategory) > label,
+  #basicTopRow .field > label,
+  #termRow .field:not(#fxRateField) > label,
+  #exportCostCard .field > label,
+  #domesticTransportCard .field:not(#fxRateField) > label {
+    grid-column: 1 !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .field:has(> #itemCategory) > input,
+  .field:has(> #itemCategory) > select,
+  .field:has(> #itemCategory) > button,
+  #basicTopRow .field > input,
+  #basicTopRow .field > select,
+  #basicTopRow .field > button,
+  #termRow .field:not(#fxRateField) > input,
+  #termRow .field:not(#fxRateField) > select,
+  #termRow .field:not(#fxRateField) > button,
+  #exportCostCard .field > input,
+  #exportCostCard .field > select,
+  #exportCostCard .field > button,
+  #domesticTransportCard .field:not(#fxRateField) > input,
+  #domesticTransportCard .field:not(#fxRateField) > select,
+  #domesticTransportCard .field:not(#fxRateField) > button {
+    grid-column: 2 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  /* helper text and extra elements full width under the row */
+  .field:has(> #itemCategory) > .help,
+  .field:has(> #itemCategory) > .inline,
+  #basicTopRow .field > .help,
+  #basicTopRow .field > .inline,
+  #termRow .field:not(#fxRateField) > .help,
+  #termRow .field:not(#fxRateField) > .inline,
+  #exportCostCard .field > .help,
+  #exportCostCard .field > .inline,
+  #domesticTransportCard .field:not(#fxRateField) > .help,
+  #domesticTransportCard .field:not(#fxRateField) > .inline {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* keep FX field original vertical layout */
+  #fxRateField {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+
+  /* calc buttons stay horizontal */
+  .inline:has(#calcBtn) {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+  }
+  #calcBtn,
+  #printBtn,
+  #excelExportBtn {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    width: auto !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    white-space: nowrap !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -4229,23 +4350,3 @@ function initSalePricePlaceholder() {
   <div id="saveToast" class="save-toast" aria-live="polite"></div>
 </body>
 </html>
-@media (max-width: 699px) {
-
-  input,
-  select,
-  button {
-    height: 48px;
-    min-height: 48px;
-    padding: 10px 12px;
-    font-size: 16px;
-  }
-
-  .spin-btn {
-    height: 48px;
-    min-height: 48px;
-  }
-
-  .spin-input-wrap input {
-    height: 48px;
-  }
-}
