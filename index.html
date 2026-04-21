@@ -869,6 +869,79 @@ function initSalePricePlaceholder() {
 
 
 
+
+
+    /* iPhone select height fix + light-blue arrow button */
+    .select-wrap {
+      position: relative;
+      display: block;
+      width: 100%;
+      min-width: 0;
+    }
+    .select-wrap select {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      min-height: 46px;
+      height: 46px;
+      line-height: 1.2;
+      padding: 11px 48px 11px 12px;
+      border-radius: 12px;
+      background-color: #fff;
+      background-image: none !important;
+    }
+    .select-wrap::after {
+      content: "▼";
+      position: absolute;
+      top: 50%;
+      right: 0;
+      transform: translateY(-50%);
+      width: 40px;
+      height: calc(100% - 2px);
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-left: 1px solid #b7d6f4;
+      border-radius: 0 12px 12px 0;
+      background: linear-gradient(180deg, #dff2ff 0%, #c8e9ff 100%);
+      color: #1f5fa8;
+      font-size: 12px;
+      font-weight: 800;
+      pointer-events: none;
+      box-sizing: border-box;
+    }
+    .select-wrap select:focus + .select-focus-ring,
+    .select-wrap:focus-within .select-focus-ring {
+      opacity: 1;
+    }
+    .select-focus-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      box-shadow: 0 0 0 4px rgba(47, 125, 209, 0.12);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
+    select::-ms-expand { display: none; }
+
+    @supports (-webkit-touch-callout: none) {
+      .select-wrap select {
+        font-size: 16px; /* iOS zoom/height崩れ対策 */
+      }
+    }
+
+    @media (max-width: 699px) {
+      .select-wrap select {
+        min-height: 46px;
+        height: 46px;
+      }
+      .select-wrap::after {
+        width: 42px;
+      }
+    }
+
     @media (min-width: 700px) {
       /* PC版のみ: 実コスト系は右寄せ、調整値・数量系は中央 */
       #doFee,
@@ -1317,6 +1390,8 @@ function initSalePricePlaceholder() {
       transportTouched: false
     };
 
+    wrapSelectForIOSDropdown();
+
     function n(v) {
       const x = parseFloat(String(v ?? '').replace(/,/g, ''));
       return Number.isFinite(x) ? x : 0;
@@ -1567,6 +1642,21 @@ function initSalePricePlaceholder() {
     }
 
 
+
+    function wrapSelectForIOSDropdown() {
+      document.querySelectorAll('select').forEach(select => {
+        if (select.closest('.select-wrap')) return;
+        const wrap = document.createElement('span');
+        wrap.className = 'select-wrap';
+        select.parentNode.insertBefore(wrap, select);
+        wrap.appendChild(select);
+        const ring = document.createElement('span');
+        ring.className = 'select-focus-ring';
+        wrap.appendChild(ring);
+      });
+    }
+
+
     function uid() {
       return 's' + Math.random().toString(36).slice(2, 10);
     }
@@ -1638,6 +1728,7 @@ function initSalePricePlaceholder() {
     function renderSupplierMasterEditor() {
       const rows = state.supplierMaster.map(s => supplierRowHtml(s)).join('') || supplierRowHtml(normalizeSupplierRow({}));
       els.supplierMasterBody.innerHTML = rows;
+      wrapSelectForIOSDropdown();
       bindSupplierEditorRowEvents();
     }
 
