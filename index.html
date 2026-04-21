@@ -4410,3 +4410,81 @@ function initSalePricePlaceholder() {
   <div id="saveToast" class="save-toast" aria-live="polite"></div>
 </body>
 </html>
+@media (max-width: 699px) {
+
+  /* 共通の見た目をそろえる */
+  #basicTopRow input,
+  #basicTopRow select,
+  #termRow input,
+  #termRow select,
+  #exportCostCard input,
+  #exportCostCard select,
+  #domesticTransportCard input,
+  #domesticTransportCard select {
+    height: 48px !important;
+    min-height: 48px !important;
+    box-sizing: border-box !important;
+    font-size: 16px !important;
+    line-height: 48px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-radius: 12px !important;
+  }
+
+  /* 中央揃え対象 */
+  #basicTopRow input,
+  #termRow input,
+  #exportCostCard input,
+  #domesticTransportCard input,
+  #itemCategory,
+  #salesTerm,
+  #purchaseTerm,
+  #lcFee {
+    text-align: center !important;
+    text-align-last: center !important;
+  }
+
+  /* 例外：左寄せ維持 */
+  #currencyType,
+  #unitType,
+  #freightCurrency,
+  #domesticTransportType {
+    text-align: left !important;
+    text-align-last: left !important;
+  }
+
+  /* select は右の矢印ぶんでズレるので左右余白を対称にする */
+  #basicTopRow select,
+  #termRow select,
+  #exportCostCard select,
+  #domesticTransportCard select {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    background-position: right 14px center !important;
+    background-repeat: no-repeat !important;
+    padding-left: 16px !important;
+    padding-right: 40px !important;
+  }
+
+  /* 中央揃え対象selectは、矢印ぶんも見込んで少し補正 */
+  #itemCategory,
+  #salesTerm,
+  #purchaseTerm,
+  #lcFee {
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+  }
+
+  /* inputのプレースホルダも中央 */
+  #basicTopRow input::placeholder,
+  #termRow input::placeholder,
+  #exportCostCard input::placeholder,
+  #domesticTransportCard input::placeholder {
+    text-align: center !important;
+  }
+
+  /* number入力の見た目ブレを減らす */
+  input[type="number"] {
+    font-variant-numeric: tabular-nums;
+  }
+}
