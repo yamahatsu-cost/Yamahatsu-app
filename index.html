@@ -1204,7 +1204,7 @@ function initSalePricePlaceholder() {
         ・販売単価→仕入可能単価では、販売単価から必要経費を差し引き、最終的に円/kgを表示します。<br/>
         ・仕入単価→販売単価では、仕入単価から逆算し、CIF/CFR は USD/ton、FOB/CY/倉庫渡し は 円/kg で表示します。<br/>
         ・Lot・件は同義として扱い、船積み単位数量で重量単価に換算して計算します。<br/>
-        ・為替仲値欄は手入力向けです。参考相場は前営業日の為替から▲1円差引いたレートです。<br/>
+        ・為替仲値欄は手入力も可能です。取得ボタンではリアルタイム相場から▲0.5円した参考値を反映します。<br/>
 	・ドレー単価マスタは各自のスマホ/PCに保存され、他の方と共有されません。	
       </div>
 </div>
@@ -2286,20 +2286,25 @@ function refreshUI() {
     async function fetchFxRate() {
       els.fxStatus.textContent = '為替を取得中…';
       try {
-        const res = await fetch('https://api.frankfurter.dev/v2/rates?base=USD&quotes=JPY');
+        const res = await fetch('https://api.frankfurter.dev/v2/rates?base=USD&quotes=JPY', { cache: 'no-store' });
         if (!res.ok) throw new Error('API error');
         const data = await res.json();
         let rate = null;
         if (Array.isArray(data) && data[0] && data[0].quote === 'JPY') rate = data[0].rate;
         else if (data?.rates?.JPY) rate = data.rates.JPY;
         if (!rate) throw new Error('rate not found');
-        const adjustedRate = Number(rate) - 1.0;
+
+        const realRate = Number(rate);
+        const adjustedRate = realRate - 0.5;
+
         els.fxRate.value = adjustedRate.toFixed(2);
-        els.fxStatus.textContent = '前営業日の仲値から▲1.0円した為替です。最新の為替は手修正してください。';
+        els.fxStatus.textContent = '';
+        showUnifiedToast(`今日の為替 ${realRate.toFixed(2)} -0.5 = ${adjustedRate.toFixed(2)} を取得`, 1500);
         updateCalcButtonState();
         saveData(false);
       } catch (e) {
         els.fxStatus.textContent = '取得できませんでした。手入力してください。';
+        showUnifiedToast('為替取得に失敗しました', 1500);
       }
     }
 
