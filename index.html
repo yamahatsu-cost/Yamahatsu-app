@@ -795,6 +795,78 @@ function initSalePricePlaceholder() {
       transform: translateX(-50%) translateY(0);
     }
 
+    @media (max-width: 699px) {
+      /* スマホ版のみ: 基本条件・輸出コスト入力・国内輸送費をラベル左／入力右に統一 */
+      #basicConditionsCard .row .field:not(#fxRateField),
+      #exportCostCard .row .field,
+      #domesticTransportCard .row.two .field,
+      #domesticTransportCard #storageShortRow .field {
+        display: grid;
+        grid-template-columns: minmax(92px, 34%) minmax(0, 1fr);
+        align-items: center;
+        column-gap: 10px;
+        row-gap: 0;
+      }
+
+      #basicConditionsCard .row .field:not(#fxRateField) label,
+      #exportCostCard .row .field label,
+      #domesticTransportCard .row.two .field label,
+      #domesticTransportCard #storageShortRow .field label {
+        margin: 0;
+        line-height: 1.25;
+        font-size: 0.86rem;
+      }
+
+      #basicConditionsCard .row .field:not(#fxRateField) input,
+      #basicConditionsCard .row .field:not(#fxRateField) select,
+      #exportCostCard .row .field input,
+      #exportCostCard .row .field select,
+      #domesticTransportCard .row.two .field input,
+      #domesticTransportCard .row.two .field select,
+      #domesticTransportCard #storageShortRow .field input,
+      #domesticTransportCard #storageShortRow .field select {
+        width: 100%;
+        min-width: 0;
+      }
+
+      #basicConditionsCard .row .field:not(#fxRateField) .help,
+      #exportCostCard .row .field .help,
+      #domesticTransportCard .row.two .field .help,
+      #domesticTransportCard #storageShortRow .field .help {
+        grid-column: 1 / -1;
+        margin-top: 6px;
+      }
+
+      /* 為替仲値は現状維持 */
+      #fxRateField {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      /* 補助ボタンは横並び対象外 */
+      #domesticTransportCard > .row:last-of-type .field {
+        display: flex;
+      }
+
+      /* 計算ボタン群はスマホでも横並び固定 */
+      #calcActionRow {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        align-items: stretch;
+      }
+
+      #calcActionRow > button {
+        width: 100%;
+        min-width: 0;
+        padding-left: 8px;
+        padding-right: 8px;
+        font-size: 0.92rem;
+        white-space: nowrap;
+      }
+    }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -829,7 +901,7 @@ function initSalePricePlaceholder() {
 <div class="footer-note">入力内容はこの端末内に自動保存されます。為替取得のみインターネット接続が必要です。</div>
 <div class="footer-note" style="margin-top:10px;">アプリ版: 自動更新版</div>
 </div>
-<div class="card">
+<div class="card" id="basicConditionsCard">
 <div class="section-title">2. 基本条件</div>
 <div class="row" style="margin-top:0; margin-bottom:12px;">
 <div class="field" style="max-width:260px;">
@@ -1010,9 +1082,9 @@ function initSalePricePlaceholder() {
 </div>
 </div>
 </div>
-<div class="card">
+<div class="card" id="calcSectionCard">
 <div class="section-title">5. 計算</div>
-<div class="inline" style="margin-bottom:12px;">
+<div class="inline" id="calcActionRow" style="margin-bottom:12px;">
 <button id="calcBtn" type="button">計算する</button>
 <button class="secondary" id="printBtn" type="button">印刷</button>
 <button class="secondary" id="excelExportBtn" type="button">Excel出力</button>
