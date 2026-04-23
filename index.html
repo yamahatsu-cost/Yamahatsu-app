@@ -4126,7 +4126,14 @@ els.fxRate.addEventListener('blur', () => {
     els.calcBtn.addEventListener('click', calculate);
     if (document.getElementById('resetBtn')) document.getElementById('resetBtn').addEventListener('click', resetData);
     els.printBtn.addEventListener('click', printEstimate);
-    els.excelExportBtn.addEventListener('click', exportEstimateToExcel);
+    els.excelExportBtn.addEventListener('click', async () => {
+      try {
+        saveNamedFormData();
+      } catch (e) {
+        console.warn('save before excel export failed', e);
+      }
+      await exportEstimateToExcel();
+    });
     document.getElementById('resetBtnTop').addEventListener('click', resetData);
     els.saveBtn.addEventListener('click', saveNamedFormData);
     els.loadDataBtn.addEventListener('click', openSavedDataModal);
