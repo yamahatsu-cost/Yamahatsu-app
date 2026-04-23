@@ -1201,11 +1201,11 @@ function initSalePricePlaceholder() {
 <div class="row two hidden" id="storageShortRow">
 <div class="field" id="storageFeeField">
 <label for="storageFee">入出庫・保管（円/ton)</label>
-<input id="storageFee" placeholder="例）2200" step="100" type="number" value=""/>
+<input id="storageFee" inputmode="numeric" placeholder="例）2200" step="100" type="text" value=""/>
 </div>
 <div class="field" id="shortDrayCostField">
 <label for="shortDrayCost">ショートドレー（車単位）</label>
-<input id="shortDrayCost" placeholder="例）25000" step="1000" type="number" value=""/>
+<input id="shortDrayCost" inputmode="numeric" placeholder="例）25000" step="1000" type="text" value=""/>
 </div>
 </div>
 <div class="row">
@@ -1484,7 +1484,7 @@ function initSalePricePlaceholder() {
     }
 
     function refreshFormattedInputs() {
-      [els.salePrice, els.buyPrice, els.seaFreight, els.doFee, els.customsFee, els.handlingFee, els.domesticTransportCost, els.storageFee].forEach(el => {
+      [els.salePrice, els.buyPrice, els.seaFreight, els.doFee, els.customsFee, els.handlingFee, els.domesticTransportCost, els.storageFee, els.shortDrayCost].forEach(el => {
         if (!el) return;
         el.style.textAlign = 'center';
         el.setAttribute('inputmode', getInputCurrency(el) === 'USD' ? 'decimal' : 'numeric');
@@ -1501,6 +1501,7 @@ function initSalePricePlaceholder() {
       bindFormattedInput(els.handlingFee, () => 'JPY');
       bindFormattedInput(els.domesticTransportCost, () => 'JPY');
       bindFormattedInput(els.storageFee, () => 'JPY');
+      bindFormattedInput(els.shortDrayCost, () => 'JPY');
       refreshFormattedInputs();
     }
     function floor2(v) { return Math.floor(v * 100) / 100; }
